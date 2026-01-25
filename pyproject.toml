@@ -1,0 +1,80 @@
+[project]
+name = "pypolymix"
+version = "0.1.0"
+description = "A light-weight PyTorch companion for building stochastic surrogate models"
+authors = [
+    {name = "pmrobbe",email = "pmrobbe@sandia.gov"},
+    {name = "csafta",email = "csafta@sandia.gov"},
+    {name = "hnnjam",email = "hnnjam@sandia.gov"}
+]
+readme = "README.md"
+license = {file = "LICENSE"}
+requires-python = ">=3.10,<4.0"
+dependencies = [
+    "torch (>=2.1.0,<3.0.0)",
+]
+keywords = [
+    "uncertainty quantification",
+    "surrogate modeling",
+    "pytorch",
+    "polynomial chaos expansion",
+    "stochastic modeling",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: BSD License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Scientific/Engineering :: Mathematics",
+    "Topic :: Scientific/Engineering :: Physics",
+]
+
+[project.urls]
+Homepage = "https://sandialabs.github.io/pypolymix"
+Documentation = "https://sandialabs.github.io/pypolymix"
+Repository = "https://github.com/sandialabs/pypolymix"
+Issues = "https://github.com/sandialabs/pypolymix/issues"
+
+[project.optional-dependencies]
+examples = [
+    "ipykernel (>=6.30.1,<7.0.0)",
+    "matplotlib (>=3.10.6,<4.0.0)",
+    "papermill (>=2.6.0,<3.0.0)"
+]
+docs = [
+    "mkdocs (>=1.6.1,<2.0.0)",
+    "mkdocstrings[python] (>=0.30.1,<0.31.0)",
+    "mkdocs-jupyter (>=0.25.1,<0.26.0)",
+    "mkdocs-material (>=9.7.0,<10.0.0)",
+    # "mkdocs-to-pdf (>=0.10.1,<0.11.0)",
+]
+dev = [
+    "pre-commit (>=4.3.0,<5.0.0)"
+]
+
+[tool.poetry]
+packages = [{include = "pypolymix", from = "src"}]
+
+[tool.poetry.group.examples.dependencies]
+ipykernel = ">=6.30.1,<7.0.0"
+matplotlib = ">=3.10.6,<4.0.0"
+papermill = ">=2.6.0,<3.0.0"
+
+[tool.poetry.group.docs.dependencies]
+mkdocs = ">=1.6.1,<2.0.0"
+mkdocstrings = {version = ">=0.30.1,<0.31.0", extras = ["python"]}
+mkdocs-jupyter = ">=0.25.1,<0.26.0"
+mkdocs-material = ">=9.7.0,<10.0.0"
+# mkdocs-to-pdf = ">=0.10.1,<0.11.0"
+
+[tool.poetry.group.dev.dependencies]
+pre-commit = ">=4.3.0,<5.0.0"
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"

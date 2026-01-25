@@ -1,0 +1,73 @@
+site_name: "pypolymix"
+
+nav:
+  - Home: index.md
+  - Theory: theo.md
+  - Package Reference:
+    - API: api.md
+  - Examples:
+    - Polynomial Chaos Expansion: examples/pce.ipynb
+    - Neural Network: examples/nn.ipynb
+    - Mixture of Experts: examples/moe.ipynb
+    - Full Covariance: examples/full_covariance.ipynb
+    - Custom Priors: examples/custom_priors.ipynb
+    - Low Rank Covariance: examples/low_rank_covariance.ipynb
+  - Acknowledgements: 
+    - Acknowledgements: ack.md
+
+theme:
+  name: material
+  # name: readthedocs
+  logo: img/logo.png
+  features:
+    - navigation.expand
+    - toc.follow
+    - navigation.sections
+    - toc.integrate
+
+plugins:
+  - mkdocs-jupyter
+  - search
+  - autorefs
+  - mkdocstrings:
+      handlers:
+        python:
+          paths:
+            - src
+          options:
+            docstring_style: google
+            show_submodules: true
+            show_root_heading: false
+            show_root_toc_entry: false
+            heading_level: 4
+            parameter_headings: false
+            show_object_full_path: false
+            show_source: false
+            docstring_section_style: list
+            separate_signature: true
+            line_length: 80
+            merge_init_into_class: true
+            docstring_options:
+              ignore_init_summary: true
+            filters:
+              - "!^__init__$"
+              - "!^_"
+  # - to-pdf:
+  #     author: Pieterjan Robbe, Habib Najm, Cosmin Safta
+  #     cover_subtitle: Stochastic surrogate models for uncertainty quantification
+  #     cover_logo: img/logo.png
+  #     copyright: SNL
+  #     render_js: true
+  #     headless_chrome_path: /Applications/Google Chrome.app/Contents/MacOS/Google Chrome
+  #     output_path: "pypolymix-docs-v0_1_0.pdf"
+  
+
+markdown_extensions:
+  - pymdownx.arithmatex:
+      generic: true
+
+extra_javascript:
+  - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js
+
+extra_css:
+  - stylesheets/extra.css

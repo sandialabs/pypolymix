@@ -1,0 +1,29 @@
+# See https://pre-commit.com for more information
+# See https://pre-commit.com/hooks.html for more hooks
+repos:
+  # Black (code formatting)
+  - repo: https://github.com/psf/black
+    rev: 25.9.0 # Replace with the latest Black release
+    hooks:
+      - id: black
+        args: ["--line-length=100"]
+
+  # Ruff (linting + autofix)
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.14.4 # Replace with the latest Ruff release
+    hooks:
+      - id: ruff
+        args: [--fix]  # Auto-fix lint issues
+
+  # Codespell (spell checker)
+  - repo: https://github.com/codespell-project/codespell
+    rev: v2.4.1
+    hooks:
+      - id: codespell
+        args: ["-L=tbe,astroid", "-S=*.ipynb"]
+
+  # isort (sort imports alphabetically)
+  - repo: https://github.com/PyCQA/isort
+    rev: 7.0.0 # Use a specific version
+    hooks:
+      - id: isort
