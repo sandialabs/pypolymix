@@ -2,14 +2,9 @@
   <img src="https://raw.githubusercontent.com/sandialabs/pypolymix/main/docs/img/logo.png" alt="pypolymix logo" width="160">
 </p>
 
-<p align="center">
-  <a href="https://sandialabs.github.io/pypolymix">
-    <img src="https://img.shields.io/badge/docs-online-blue" alt="Docs">
-  </a>
-  <a href="https://github.com/psf/black">
-    <img src="https://img.shields.io/badge/code%20style-black-000000.svg" alt="Code style: black">
-  </a>
-</p>
+| Docs | Code style |
+|:----:|:----------:|
+| [![Docs](https://img.shields.io/badge/docs-online-blue)](https://sandialabs.github.io/pypolymix) | [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black) |
 
 # Pypolymix
 

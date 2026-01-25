@@ -1,4 +1,5 @@
 site_name: "pypolymix"
+site_url: "https://sandialabs.github.io/pypolymix/"
 
 nav:
   - Home: index.md
