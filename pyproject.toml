@@ -1,6 +1,6 @@
 [project]
 name = "pypolymix"
-version = "0.1.1"
+version = "0.1.2"
 description = "A light-weight PyTorch companion for building stochastic surrogate models"
 authors = [
     {name = "pmrobbe",email = "pmrobbe@sandia.gov"},

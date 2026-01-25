@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/img/logo.png" alt="pypolymix logo" width="160">
+  <img src="https://raw.githubusercontent.com/sandialabs/pypolymix/main/docs/img/logo.png" alt="pypolymix logo" width="160">
 </p>
 
 <p align="center">
@@ -79,7 +79,7 @@ with torch.no_grad():
 ```
 
 <p align="center">
-  <img src="docs/img/pce.png" alt="Polynomial chaos example" width="720">
+  <img src="https://raw.githubusercontent.com/sandialabs/pypolymix/main/docs/img/pce.png" alt="Polynomial chaos example" width="720">
 </p>
 
 ## Development
