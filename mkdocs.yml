@@ -17,8 +17,8 @@ nav:
     - Acknowledgements: ack.md
 
 theme:
-  name: material
-  # name: readthedocs
+  # name: material
+  name: readthedocs
   logo: img/logo.png
   features:
     - navigation.expand
