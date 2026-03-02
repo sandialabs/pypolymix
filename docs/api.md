@@ -63,6 +63,23 @@ with a configurable rank while staying closer to `O(d)` memory.
 
 ::: pypolymix.parameter_groups.gaussian.LowRankGaussianGroup
 
+### LangevinGroup
+
+Implicit posterior sampler driven by unadjusted Langevin dynamics:
+`theta <- theta + step_size * score(theta) + sqrt(2 * step_size) * noise`.
+
+`LangevinGroup` keeps the same `ParameterGroup` interface and can be mixed with
+the other groups inside `StochasticModel`.
+
+The score model is passed in as any `SurrogateModel` satisfying:
+
+- `score_model.num_inputs == num_params`
+- `score_model.num_outputs == num_params`
+
+`NeuralNetwork` is the most common choice for this role.
+
+::: pypolymix.parameter_groups.langevin.LangevinGroup
+
 ## Priors
 
 All parameter groups accept a `Prior` object that

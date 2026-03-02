@@ -8,6 +8,7 @@ nav:
     - API: api.md
   - Examples:
     - Polynomial Chaos Expansion: examples/pce.ipynb
+    - Langevin Polynomial Chaos: examples/langevin_pce.ipynb
     - Neural Network: examples/nn.ipynb
     - Mixture of Experts: examples/moe.ipynb
     - Full Covariance: examples/full_covariance.ipynb
