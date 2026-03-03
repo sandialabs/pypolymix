@@ -1,0 +1,2079 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><link rel="canonical" href="https://sandialabs.github.io/pypolymix/api/" />
+      <link rel="shortcut icon" href="../img/favicon.ico" />
+    <title>API - pypolymix</title>
+    <link rel="stylesheet" href="../css/theme.css" />
+    <link rel="stylesheet" href="../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+        <link href="../assets/_mkdocstrings.css" rel="stylesheet" />
+        <link href="../stylesheets/extra.css" rel="stylesheet" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "API";
+        var mkdocs_page_input_path = "api.md";
+        var mkdocs_page_url = "/pypolymix/api/";
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="..">
+          <img src="../img/logo.png" class="logo" alt="Logo"/>
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="..">Home</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../theo/">Theory</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Package Reference</span></p>
+              <ul class="current">
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">API</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#stochastic-model">Stochastic Model</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#pypolymix.stochastic_model.StochasticModel.distribution_loss">distribution_loss</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#pypolymix.stochastic_model.StochasticModel.forward">forward</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#pypolymix.stochastic_model.StochasticModel.num_params">num_params</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#pypolymix.stochastic_model.StochasticModel.sample_parameters">sample_parameters</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#parameter-groups">Parameter Groups</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#deterministicgroup">DeterministicGroup</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#pypolymix.parameter_groups.deterministic.DeterministicGroup.distribution_loss">distribution_loss</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#pypolymix.parameter_groups.deterministic.DeterministicGroup.sample_parameters">sample_parameters</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#pypolymix.parameter_groups.deterministic.DeterministicGroup.variational_distribution">variational_distribution</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#iidgaussiangroup">IIDGaussianGroup</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#pypolymix.parameter_groups.gaussian.IIDGaussianGroup.std">std</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#pypolymix.parameter_groups.gaussian.IIDGaussianGroup.sample_parameters">sample_parameters</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#pypolymix.parameter_groups.gaussian.IIDGaussianGroup.variational_distribution">variational_distribution</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#gaussiangroup">GaussianGroup</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#pypolymix.parameter_groups.gaussian.GaussianGroup.sample_parameters">sample_parameters</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#pypolymix.parameter_groups.gaussian.GaussianGroup.variational_distribution">variational_distribution</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#lowrankgaussiangroup">LowRankGaussianGroup</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#langevingroup">LangevinGroup</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#pypolymix.parameter_groups.langevin.LangevinGroup.distribution_loss">distribution_loss</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#pypolymix.parameter_groups.langevin.LangevinGroup.sample_parameters">sample_parameters</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#pypolymix.parameter_groups.langevin.LangevinGroup.variational_distribution">variational_distribution</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#priors">Priors</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#iidgaussianprior">IIDGaussianPrior</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#pypolymix.priors.common.IIDGaussianPrior.distribution">distribution</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#gaussianprior">GaussianPrior</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#pypolymix.priors.common.GaussianPrior.distribution">distribution</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#laplaceprior">LaplacePrior</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#pypolymix.priors.common.LaplacePrior.distribution">distribution</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#surrogate-models">Surrogate Models</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#neuralnetwork">NeuralNetwork</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#pypolymix.surrogate_models.neural_network.NeuralNetwork.forward">forward</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#pypolymix.surrogate_models.neural_network.NeuralNetwork.num_params">num_params</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#polynomialchaosexpansion">PolynomialChaosExpansion</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#pypolymix.surrogate_models.polynomial_chaos.PolynomialChaosExpansion.num_terms">num_terms</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#pypolymix.surrogate_models.polynomial_chaos.PolynomialChaosExpansion.forward">forward</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#pypolymix.surrogate_models.polynomial_chaos.PolynomialChaosExpansion.num_params">num_params</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#mixture-components">Mixture Components</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#gatingnetwork">GatingNetwork</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#pypolymix.surrogate_models.mixture.GatingNetwork.forward">forward</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#mixtureofexperts">MixtureOfExperts</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#pypolymix.surrogate_models.mixture.MixtureOfExperts.forward">forward</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#pypolymix.surrogate_models.mixture.MixtureOfExperts.get_expert_outputs">get_expert_outputs</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#pypolymix.surrogate_models.mixture.MixtureOfExperts.get_gating_weights">get_gating_weights</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#pypolymix.surrogate_models.mixture.MixtureOfExperts.num_params">num_params</a>
+    </li>
+        </ul>
+    </li>
+        </ul>
+    </li>
+    </ul>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Examples</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../examples/pce/">Stochastic Polynomial Chaos Expansion</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../examples/langevin_pce/">Langevin Polynomial Chaos</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../examples/nn/">Stochastic Neural Network</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../examples/moe/">Stochastic Mixture of Experts</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../examples/full_covariance/">Full-Covariance Polynomial Chaos</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../examples/custom_priors/">Priors Guide Ambiguous Line Fits</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../examples/low_rank_covariance/">Low-Rank Covariance Polynomial Chaos</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Acknowledgements</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../ack/">Acknowledgements</a>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="..">pypolymix</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href=".." class="icon icon-home" aria-label="Docs"></a></li>
+          <li class="breadcrumb-item">Package Reference</li>
+      <li class="breadcrumb-item active">API</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="api-reference">API Reference</h1>
+<p><code>pypolymix</code> splits stochastic surrogate modeling into three composable layers:</p>
+<ol>
+<li><strong>Surrogate models</strong> (<code>pypolymix.surrogate_models</code>): deterministic forward
+   models that expect an input tensor and a tensor of parameters.</li>
+<li><strong>Parameter groups</strong> (<code>pypolymix.parameter_groups</code>): variational families with
+   associated priors defined over blocks of surrogate parameters.</li>
+<li><strong>Stochastic model</strong> (<code>pypolymix.StochasticModel</code>): glues a surrogate to one
+   or more parameter groups and exposes a familiar PyTorch <code>nn.Module</code>.</li>
+</ol>
+<h2 id="stochastic-model">Stochastic Model</h2>
+<p>Wrap any surrogate in the <code>StochasticModel</code> framework and provide a list of 
+parameter groups whose samples are concatenated before being fed to the surrogate.</p>
+<pre><code class="language-python">import torch
+from pypolymix import StochasticModel, parameter_groups, surrogate_models
+
+surrogate = surrogate_models.NeuralNetwork(num_inputs=1, num_outputs=1)
+group = parameter_groups.IIDGaussianGroup(&quot;nn&quot;, surrogate.num_params())
+model = StochasticModel(surrogate, [group])
+
+x = torch.linspace(-1, 1, 32).unsqueeze(-1)
+y = model(x, num_samples=8)  # (8, 32, 1)
+loss = y.mean() + model.distribution_loss()
+</code></pre>
+
+
+<div class="doc doc-object doc-class">
+
+
+
+
+    <div class="doc doc-contents first">
+            <p class="doc doc-class-bases">
+              Bases: <code><span title="torch.nn.Module">Module</span></code></p>
+
+
+
+        <p>Wrap a deterministic surrogate model with sampled parameters.</p>
+
+
+<details class="example" open>
+  <summary>Example</summary>
+  <pre><code class="language-python">&gt;&gt;&gt; from pypolymix import parameter_groups, surrogate_models
+&gt;&gt;&gt; surrogate = surrogate_models.NeuralNetwork(num_inputs=1, num_outputs=1)
+&gt;&gt;&gt; groups = [parameter_groups.IIDGaussianGroup(&quot;nn&quot;, surrogate.num_params())]
+&gt;&gt;&gt; model = StochasticModel(surrogate, groups)
+&gt;&gt;&gt; x = torch.linspace(-1, 1, 32).unsqueeze(-1)
+&gt;&gt;&gt; y = model(x, num_samples=4)  # (4, 32, 1)
+</code></pre>
+</details>
+
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Parameters:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li>
+              <b><code>surrogate_model</code></b>
+                  (<code><span title="pypolymix.surrogate_models.base.SurrogateModel">SurrogateModel</span></code>)
+              –
+              <div class="doc-md-description">
+                <p>Base surrogate that consumes input <code>x</code> and sampled parameters.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>parameter_groups</code></b>
+                  (<code><span title="typing.Union">Union</span>[<span title="pypolymix.parameter_groups.base.ParameterGroup">ParameterGroup</span>, <span title="typing.Iterable">Iterable</span>[<span title="pypolymix.parameter_groups.base.ParameterGroup">ParameterGroup</span>]]</code>)
+              –
+              <div class="doc-md-description">
+                <p>Parameter-group module or iterable of modules whose draws are concatenated
+to produce the full parameter vector expected by <code>surrogate_model</code>.</p>
+              </div>
+            </li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="pypolymix.stochastic_model.StochasticModel.distribution_loss" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">distribution_loss</span>
+
+
+</h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">distribution_loss</span><span class="p">()</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Return the sum of KL/cross-entropy terms provided by every parameter group.</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="pypolymix.stochastic_model.StochasticModel.forward" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">forward</span>
+
+
+</h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">forward</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">num_samples</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Evaluate the surrogate under randomly drawn parameters.</p>
+
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Parameters:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li>
+              <b><code>x</code></b>
+                  (<code><span title="torch.Tensor">Tensor</span></code>)
+              –
+              <div class="doc-md-description">
+                <p>Input tensor passed to the surrogate model.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>num_samples</code></b>
+                  (<code><span title="int">int</span></code>, default:
+                      <code>1</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>Number of parameter draws to average/evaluate over.</p>
+              </div>
+            </li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+<details class="example" open>
+  <summary>Example</summary>
+  <p>Evaluate a function at <code>x</code> using 10 random draws of the parameters:</p>
+<pre><code class="language-python">&gt;&gt;&gt; y = model(x, num_samples=10)
+&gt;&gt;&gt; y.shape
+torch.Size([10, x.shape[0], surrogate_model.num_outputs])
+</code></pre>
+</details>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="pypolymix.stochastic_model.StochasticModel.num_params" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">num_params</span>
+
+
+</h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">num_params</span><span class="p">()</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Return the total number of scalar parameters managed across groups.</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="pypolymix.stochastic_model.StochasticModel.sample_parameters" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">sample_parameters</span>
+
+
+</h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">sample_parameters</span><span class="p">(</span><span class="n">num_samples</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Draw parameter samples from each group and concatenate them.</p>
+
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Parameters:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li>
+              <b><code>num_samples</code></b>
+                  (<code><span title="int">int</span></code>, default:
+                      <code>1</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>Number of Monte Carlo samples per parameter group.</p>
+              </div>
+            </li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Returns:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li>
+                  <code><span title="torch.Tensor">Tensor</span></code>
+              –
+              <div class="doc-md-description">
+                <p>Tensor with shape <code>(num_samples, surrogate_model.num_params())</code>.</p>
+              </div>
+            </li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+
+</div><h2 id="parameter-groups">Parameter Groups</h2>
+<p>Parameter groups describe how parameters are sampled and regularised. They can
+be mixed (e.g. deterministic biases and stochastic weights) by instantiating
+multiple groups and passing them to the same stochastic model.</p>
+<h3 id="deterministicgroup">DeterministicGroup</h3>
+<p>Use when you want point estimates for a parameter block while still leveraging
+the same interface as the stochastic groups.</p>
+
+
+<div class="doc doc-object doc-class">
+
+
+
+
+    <div class="doc doc-contents first">
+            <p class="doc doc-class-bases">
+              Bases: <code><span title="pypolymix.parameter_groups.base.ParameterGroup">ParameterGroup</span></code></p>
+
+
+
+        <p>Parameter group for deterministic inference.</p>
+<p>Use this when optimisation should learn a single point estimate rather than
+sampling from a posterior approximation.</p>
+
+
+<details class="example" open>
+  <summary>Example</summary>
+  <pre><code class="language-python">&gt;&gt;&gt; group = DeterministicGroup(&quot;weights&quot;, num_params=3)
+&gt;&gt;&gt; theta = group.sample_parameters(2)
+&gt;&gt;&gt; theta.shape
+torch.Size([2, 3])
+</code></pre>
+</details>
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="pypolymix.parameter_groups.deterministic.DeterministicGroup.distribution_loss" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">distribution_loss</span>
+
+
+</h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">distribution_loss</span><span class="p">()</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Return the negative log prior density evaluated at the current point.</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="pypolymix.parameter_groups.deterministic.DeterministicGroup.sample_parameters" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">sample_parameters</span>
+
+
+</h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">sample_parameters</span><span class="p">(</span><span class="n">num_samples</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Return the same parameter vector repeated <code>num_samples</code> times.</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="pypolymix.parameter_groups.deterministic.DeterministicGroup.variational_distribution" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">variational_distribution</span>
+
+
+</h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">variational_distribution</span><span class="p">()</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Raises an error.</p>
+
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+
+</div><h3 id="iidgaussiangroup">IIDGaussianGroup</h3>
+<p>Independent Normal posterior with per-parameter mean and (log) std that supports
+reparameterised sampling for variational inference.</p>
+
+
+<div class="doc doc-object doc-class">
+
+
+
+
+    <div class="doc doc-contents first">
+            <p class="doc doc-class-bases">
+              Bases: <code><span title="pypolymix.parameter_groups.base.ParameterGroup">ParameterGroup</span></code></p>
+
+
+
+        <p>I.i.d. Gaussian variational family: <code>q = Normal(mean, std)</code>.</p>
+
+
+<details class="example" open>
+  <summary>Example</summary>
+  <pre><code class="language-python">&gt;&gt;&gt; group = IIDGaussianGroup(&quot;weights&quot;, num_params=4)
+&gt;&gt;&gt; samples = group.sample_parameters(16)
+&gt;&gt;&gt; samples.shape
+torch.Size([16, 4])
+</code></pre>
+</details>
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h4 id="pypolymix.parameter_groups.gaussian.IIDGaussianGroup.std" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">std</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+</h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">std</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Positive standard deviation parameter obtained via <code>exp</code>.</p>
+
+    </div>
+
+</div>
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="pypolymix.parameter_groups.gaussian.IIDGaussianGroup.sample_parameters" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">sample_parameters</span>
+
+
+</h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">sample_parameters</span><span class="p">(</span><span class="n">num_samples</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Draw <code>n_samples</code> parameter vectors via <code>rsample</code> for reparameterization.</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="pypolymix.parameter_groups.gaussian.IIDGaussianGroup.variational_distribution" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">variational_distribution</span>
+
+
+</h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">variational_distribution</span><span class="p">()</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Return an independent normal distribution over all parameters.</p>
+
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+
+</div><h3 id="gaussiangroup">GaussianGroup</h3>
+<p>Full-covariance Gaussian variational family parameterised by a Cholesky factor,
+useful when posterior correlations cannot be ignored.</p>
+
+
+<div class="doc doc-object doc-class">
+
+
+
+
+    <div class="doc doc-contents first">
+            <p class="doc doc-class-bases">
+              Bases: <code><span title="pypolymix.parameter_groups.base.ParameterGroup">ParameterGroup</span></code></p>
+
+
+
+        <p>Full-covariance Gaussian variational family with a learnable Cholesky factor.</p>
+<p>This is useful when posterior correlations between parameters are important.</p>
+
+
+<details class="example" open>
+  <summary>Example</summary>
+  <pre><code class="language-python">&gt;&gt;&gt; from pypolymix.parameter_groups import GaussianGroup
+&gt;&gt;&gt; group = GaussianGroup(&quot;weights&quot;, num_params=2)
+&gt;&gt;&gt; group.variational_distribution().rsample().shape
+torch.Size([2])
+</code></pre>
+</details>
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="pypolymix.parameter_groups.gaussian.GaussianGroup.sample_parameters" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">sample_parameters</span>
+
+
+</h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">sample_parameters</span><span class="p">(</span><span class="n">num_samples</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Draw <code>n_samples</code> reparameterized samples from the full-covariance Gaussian.</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="pypolymix.parameter_groups.gaussian.GaussianGroup.variational_distribution" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">variational_distribution</span>
+
+
+</h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">variational_distribution</span><span class="p">()</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Return <code>torch.distributions.MultivariateNormal</code> with <code>scale_tril</code>.</p>
+
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+
+</div><h3 id="lowrankgaussiangroup">LowRankGaussianGroup</h3>
+<p>Low-rank plus diagonal Gaussian family that captures the largest correlations
+with a configurable rank while staying closer to <code>O(d)</code> memory.</p>
+
+
+<div class="doc doc-object doc-class">
+
+
+
+
+    <div class="doc doc-contents first">
+            <p class="doc doc-class-bases">
+              Bases: <code><span title="pypolymix.parameter_groups.base.ParameterGroup">ParameterGroup</span></code></p>
+
+
+
+        <p>Gaussian family with a low-rank plus diagonal covariance approximation.</p>
+<p>The covariance matrix is parameterized as <code>U U^T + diag(d)</code> with <code>rank(U)</code>
+controlled by <code>rank</code>. This captures the dominant correlations without the
+<code>O(d^2)</code> parameters and compute cost of a full Cholesky factor.</p>
+
+
+<details class="example" open>
+  <summary>Example</summary>
+  <pre><code class="language-python">&gt;&gt;&gt; group = LowRankGaussianGroup(&quot;weights&quot;, num_params=8, rank=3)
+&gt;&gt;&gt; samples = group.sample_parameters(4)
+&gt;&gt;&gt; samples.shape
+torch.Size([4, 8])
+</code></pre>
+</details>
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+
+</div><h3 id="langevingroup">LangevinGroup</h3>
+<p>Implicit posterior sampler driven by unadjusted Langevin dynamics:
+<code>theta &lt;- theta + step_size * score(theta) + sqrt(2 * step_size) * noise</code>.</p>
+<p><code>LangevinGroup</code> keeps the same <code>ParameterGroup</code> interface and can be mixed with
+the other groups inside <code>StochasticModel</code>.</p>
+<p>The score model is passed in as any <code>SurrogateModel</code> satisfying:</p>
+<ul>
+<li><code>score_model.num_inputs == num_params</code></li>
+<li><code>score_model.num_outputs == num_params</code></li>
+</ul>
+<p><code>NeuralNetwork</code> is the most common choice for this role.</p>
+
+
+<div class="doc doc-object doc-class">
+
+
+
+
+    <div class="doc doc-contents first">
+            <p class="doc doc-class-bases">
+              Bases: <code><span title="pypolymix.parameter_groups.base.ParameterGroup">ParameterGroup</span></code></p>
+
+
+
+        <p>Parameter group based on unadjusted Langevin dynamics.</p>
+<p>The group learns a score model <code>s(theta)</code> and generates samples by iterating:</p>
+<p><code>theta_{k+1} = theta_k + step_size * s(theta_k) + sqrt(2 * step_size) * xi_k</code></p>
+<p>where <code>xi_k ~ Normal(0, I)</code>.</p>
+
+
+<details class="example" open>
+  <summary>Example</summary>
+  <pre><code class="language-python">&gt;&gt;&gt; from pypolymix.surrogate_models import NeuralNetwork
+&gt;&gt;&gt; score_model = NeuralNetwork(num_inputs=6, num_outputs=6, width=16, depth=2)
+&gt;&gt;&gt; group = LangevinGroup(&quot;coeffs&quot;, num_params=6, score_model=score_model)
+&gt;&gt;&gt; samples = group.sample_parameters(num_samples=8)
+&gt;&gt;&gt; samples.shape
+torch.Size([8, 6])
+</code></pre>
+</details>
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="pypolymix.parameter_groups.langevin.LangevinGroup.distribution_loss" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">distribution_loss</span>
+
+
+</h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">distribution_loss</span><span class="p">()</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Monte Carlo estimate of <code>-E_q[log p(theta)]</code> under recent particles.</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="pypolymix.parameter_groups.langevin.LangevinGroup.sample_parameters" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">sample_parameters</span>
+
+
+</h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">sample_parameters</span><span class="p">(</span><span class="n">num_samples</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Draw parameter samples by running Langevin dynamics.</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="pypolymix.parameter_groups.langevin.LangevinGroup.variational_distribution" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">variational_distribution</span>
+
+
+</h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">variational_distribution</span><span class="p">()</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Langevin sampling defines an implicit posterior, not an analytic distribution.</p>
+
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+
+</div><h2 id="priors">Priors</h2>
+<p>All parameter groups accept a <code>Prior</code> object that
+creates a <code>torch.distributions.Distribution</code> on demand. Priors can therefore
+share learnable buffers or be reused across groups.</p>
+<h3 id="iidgaussianprior">IIDGaussianPrior</h3>
+
+
+<div class="doc doc-object doc-class">
+
+
+
+
+    <div class="doc doc-contents first">
+            <p class="doc doc-class-bases">
+              Bases: <code><span title="pypolymix.priors.base.Prior">Prior</span></code></p>
+
+
+
+        <p>Independent Gaussian prior with per-parameter mean and standard deviation.</p>
+
+
+<details class="example" open>
+  <summary>Example</summary>
+  <blockquote>
+<blockquote>
+<blockquote>
+<p>prior = IIDGaussianPrior(mean=0.0, std=0.5)
+prior.distribution(torch.Size([4]), None, None).sample().shape
+torch.Size([4])</p>
+</blockquote>
+</blockquote>
+</blockquote>
+</details>
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="pypolymix.priors.common.IIDGaussianPrior.distribution" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">distribution</span>
+
+
+</h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">distribution</span><span class="p">(</span><span class="n">event_shape</span><span class="p">,</span> <span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Return <code>Independent(N(mean, std), 1)</code> with broadcasted parameters.</p>
+
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+
+</div><h3 id="gaussianprior">GaussianPrior</h3>
+
+
+<div class="doc doc-object doc-class">
+
+
+
+
+    <div class="doc doc-contents first">
+            <p class="doc doc-class-bases">
+              Bases: <code><span title="pypolymix.priors.base.Prior">Prior</span></code></p>
+
+
+
+        <p>Full-covariance Gaussian prior :math:<code>\mathcal{N}(\mu, \Sigma)</code>.</p>
+<p>Users must provide either <code>covariance_matrix</code> or <code>scale_tril</code> when
+instantiating the prior; the other argument should be <code>None</code>.</p>
+
+
+<details class="example" open>
+  <summary>Example</summary>
+  <pre><code class="language-python">&gt;&gt;&gt; mean = torch.zeros(2)
+&gt;&gt;&gt; cov = torch.eye(2)
+&gt;&gt;&gt; prior = GaussianPrior(mean, covariance_matrix=cov)
+&gt;&gt;&gt; isinstance(prior.distribution(torch.Size([2]), None, None), td.MultivariateNormal)
+True
+</code></pre>
+</details>
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="pypolymix.priors.common.GaussianPrior.distribution" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">distribution</span>
+
+
+</h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">distribution</span><span class="p">(</span><span class="n">event_shape</span><span class="p">,</span> <span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Validate tensor shapes and build a multivariate normal distribution.</p>
+
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+
+</div><h3 id="laplaceprior">LaplacePrior</h3>
+
+
+<div class="doc doc-object doc-class">
+
+
+
+
+    <div class="doc doc-contents first">
+            <p class="doc doc-class-bases">
+              Bases: <code><span title="pypolymix.priors.base.Prior">Prior</span></code></p>
+
+
+
+        <p>IID Laplace prior that encourages sparsity.</p>
+
+
+<details class="example" open>
+  <summary>Example</summary>
+  <pre><code class="language-python">&gt;&gt;&gt; prior = LaplacePrior(loc=0.0, scale=1e-1)
+&gt;&gt;&gt; prior.distribution(torch.Size([3]), None, None).sample().shape
+torch.Size([3])
+</code></pre>
+</details>
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="pypolymix.priors.common.LaplacePrior.distribution" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">distribution</span>
+
+
+</h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">distribution</span><span class="p">(</span><span class="n">event_shape</span><span class="p">,</span> <span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Return <code>Independent(Laplace(loc, scale), 1)</code> with broadcasted params.</p>
+
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+
+</div><h2 id="surrogate-models">Surrogate Models</h2>
+<p>Surrogates implement the deterministic mapping from <code>(x, params)</code> to outputs.
+They are ordinary PyTorch modules, but operate on batched parameter samples.</p>
+<h3 id="neuralnetwork">NeuralNetwork</h3>
+<p>Fully-connected MLP whose weights/biases are supplied dynamically via sampled
+parameters.</p>
+
+
+<div class="doc doc-object doc-class">
+
+
+
+
+    <div class="doc doc-contents first">
+            <p class="doc doc-class-bases">
+              Bases: <code><span title="pypolymix.surrogate_models.base.SurrogateModel">SurrogateModel</span></code></p>
+
+
+
+        <p>Neural network driven by sampled parameters.</p>
+
+
+<details class="example" open>
+  <summary>Example</summary>
+  <pre><code class="language-python">&gt;&gt;&gt; surrogate = NeuralNetwork(num_inputs=2, num_outputs=1, width=8, depth=2)
+&gt;&gt;&gt; surrogate.num_params()
+105
+&gt;&gt;&gt; params = torch.randn(3, surrogate.num_params())
+&gt;&gt;&gt; x = torch.randn(5, 2)
+&gt;&gt;&gt; surrogate(x, params).shape
+torch.Size([3, 5, 1])
+</code></pre>
+</details>
+
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Parameters:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li>
+              <b><code>num_inputs</code></b>
+                  (<code><span title="int">int</span></code>)
+              –
+              <div class="doc-md-description">
+                <p>Dimensionality of <code>x</code>.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>num_outputs</code></b>
+                  (<code><span title="int">int</span></code>, default:
+                      <code>1</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>Number of response dimensions.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>width</code></b>
+                  (<code><span title="int">int</span></code>, default:
+                      <code>16</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>Hidden-layer width.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>depth</code></b>
+                  (<code><span title="int">int</span></code>, default:
+                      <code>1</code>
+)
+              –
+              <div class="doc-md-description">
+                <p>Number of hidden layers.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>activation</code></b>
+                  (<code><span title="typing.Callable">Callable</span></code>, default:
+                      <code><span title="torch.nn.functional.relu">relu</span></code>
+)
+              –
+              <div class="doc-md-description">
+                <p>Callable applied after each hidden linear block.</p>
+              </div>
+            </li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="pypolymix.surrogate_models.neural_network.NeuralNetwork.forward" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">forward</span>
+
+
+</h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">forward</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">params</span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Evaluate the neural network for multiple parameter samples in parallel.</p>
+
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Parameters:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li>
+              <b><code>x</code></b>
+                  (<code><span title="torch.Tensor">Tensor</span></code>)
+              –
+              <div class="doc-md-description">
+                <p>Tensor of shape (batch_size, num_inputs)</p>
+              </div>
+            </li>
+            <li>
+              <b><code>params</code></b>
+                  (<code><span title="torch.Tensor">Tensor</span></code>)
+              –
+              <div class="doc-md-description">
+                <p>Tensor of shape (num_samples, num_params)</p>
+              </div>
+            </li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Returns:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li>
+<b><code>y</code></b>(                  <code><span title="torch.Tensor">Tensor</span></code>
+)              –
+              <div class="doc-md-description">
+                <p>Tensor of shape (num_samples, batch_size, num_outputs)</p>
+              </div>
+            </li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="pypolymix.surrogate_models.neural_network.NeuralNetwork.num_params" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">num_params</span>
+
+
+</h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">num_params</span><span class="p">()</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Return the number of scalar parameters implied by the architecture.</p>
+
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+
+</div><h3 id="polynomialchaosexpansion">PolynomialChaosExpansion</h3>
+<p>Legendre polynomial chaos expansion with configurable dimension, degree, and
+number of outputs.</p>
+
+
+<div class="doc doc-object doc-class">
+
+
+
+
+    <div class="doc doc-contents first">
+            <p class="doc doc-class-bases">
+              Bases: <code><span title="pypolymix.surrogate_models.base.SurrogateModel">SurrogateModel</span></code></p>
+
+
+
+        <p>Polynomial chaos expansion with Legendre basis.</p>
+
+
+<details class="example" open>
+  <summary>Example</summary>
+  <pre><code class="language-python">&gt;&gt;&gt; surrogate = PolynomialChaosExpansion(num_inputs=1, degree=2)
+&gt;&gt;&gt; params = torch.randn(5, surrogate.num_params())
+&gt;&gt;&gt; x = torch.linspace(-1, 1, 20).unsqueeze(-1)
+&gt;&gt;&gt; surrogate(x, params).shape
+torch.Size([5, 20, 1])
+</code></pre>
+</details>
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h4 id="pypolymix.surrogate_models.polynomial_chaos.PolynomialChaosExpansion.num_terms" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">num_terms</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+</h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="n">num_terms</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Calculate the number of terms in the total order polynomial expansion.</p>
+
+    </div>
+
+</div>
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="pypolymix.surrogate_models.polynomial_chaos.PolynomialChaosExpansion.forward" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">forward</span>
+
+
+</h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">forward</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">params</span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Evaluate the polynomial chaos expansion.</p>
+
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Parameters:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li>
+              <b><code>x</code></b>
+                  (<code><span title="Tensor">Tensor</span></code>)
+              –
+              <div class="doc-md-description">
+                <p>Sample points of shape (batch_size, num_inputs)</p>
+              </div>
+            </li>
+            <li>
+              <b><code>params</code></b>
+                  (<code><span title="Tensor">Tensor</span></code>)
+              –
+              <div class="doc-md-description">
+                <p>Coefficient tensor of shape (num_samples, num_params)</p>
+              </div>
+            </li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Returns:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li>
+<b><code>y</code></b>(                  <code><span title="Tensor">Tensor</span></code>
+)              –
+              <div class="doc-md-description">
+                <p>PCE evaluations (num_samples, batch_size, num_outputs)</p>
+              </div>
+            </li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="pypolymix.surrogate_models.polynomial_chaos.PolynomialChaosExpansion.num_params" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">num_params</span>
+
+
+</h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">num_params</span><span class="p">()</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Return <code>num_terms * num_outputs</code>.</p>
+
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+
+</div><h3 id="mixture-components">Mixture Components</h3>
+<p>The mixture module contains both the gating network and the full
+Mixture-of-Experts surrogate, enabling scalable ensembles driven by sampled
+parameters.</p>
+<h4 id="gatingnetwork">GatingNetwork</h4>
+
+
+<div class="doc doc-object doc-class">
+
+
+
+
+    <div class="doc doc-contents first">
+            <p class="doc doc-class-bases">
+              Bases: <code><span title="pypolymix.surrogate_models.base.SurrogateModel">SurrogateModel</span></code></p>
+
+
+
+        <p>Gating network that outputs mixture weights via softmax.</p>
+
+
+<details class="example" open>
+  <summary>Example</summary>
+  <pre><code class="language-python">&gt;&gt;&gt; gating = GatingNetwork(num_inputs=1, num_experts=3, width=8)
+&gt;&gt;&gt; params = torch.randn(2, gating.num_params())
+&gt;&gt;&gt; x = torch.zeros(4, 1)
+&gt;&gt;&gt; gating(x, params).shape
+torch.Size([2, 4, 3])
+</code></pre>
+</details>
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="pypolymix.surrogate_models.mixture.GatingNetwork.forward" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">forward</span>
+
+
+</h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">forward</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">params</span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Compute mixture weights.</p>
+
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Parameters:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li>
+              <b><code>x</code></b>
+                  (<code><span title="torch.Tensor">Tensor</span></code>)
+              –
+              <div class="doc-md-description">
+                <p>(batch_size, num_inputs)</p>
+              </div>
+            </li>
+            <li>
+              <b><code>params</code></b>
+                  (<code><span title="torch.Tensor">Tensor</span></code>)
+              –
+              <div class="doc-md-description">
+                <p>(num_samples, num_params)</p>
+              </div>
+            </li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Returns:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li>
+                  <code><span title="torch.Tensor">Tensor</span></code>
+              –
+              <div class="doc-md-description">
+                <p>Gating weights: (num_samples, batch_size, num_experts)</p>
+              </div>
+            </li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+
+</div><h4 id="mixtureofexperts">MixtureOfExperts</h4>
+
+
+<div class="doc doc-object doc-class">
+
+
+
+
+    <div class="doc doc-contents first">
+            <p class="doc doc-class-bases">
+              Bases: <code><span title="pypolymix.surrogate_models.base.SurrogateModel">SurrogateModel</span></code></p>
+
+
+
+        <p>Mixture of Experts surrogate model compatible with stochastic parameter sampling.</p>
+
+
+<details class="example" open>
+  <summary>Example</summary>
+  <pre><code class="language-python">&gt;&gt;&gt; from pypolymix.surrogate_models import NeuralNetwork
+&gt;&gt;&gt; experts = [NeuralNetwork(num_inputs=1, num_outputs=1, width=4) for _ in range(2)]
+&gt;&gt;&gt; gating = GatingNetwork(num_inputs=1, num_experts=len(experts))
+&gt;&gt;&gt; moe = MixtureOfExperts(experts, gating)
+&gt;&gt;&gt; params = torch.randn(3, moe.num_params())
+&gt;&gt;&gt; x = torch.randn(5, 1)
+&gt;&gt;&gt; moe(x, params).shape
+torch.Size([3, 5, 1])
+</code></pre>
+</details>
+
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Parameters:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li>
+              <b><code>experts</code></b>
+                  (<code><span title="typing.List">List</span>[<span title="pypolymix.surrogate_models.base.SurrogateModel">SurrogateModel</span>]</code>)
+              –
+              <div class="doc-md-description">
+                <p>List of expert surrogate models.</p>
+              </div>
+            </li>
+            <li>
+              <b><code>gating_network</code></b>
+                  (<code><span title="pypolymix.surrogate_models.base.SurrogateModel">SurrogateModel</span></code>)
+              –
+              <div class="doc-md-description">
+                <p>A surrogate model returning mixture weights.</p>
+              </div>
+            </li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="pypolymix.surrogate_models.mixture.MixtureOfExperts.forward" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">forward</span>
+
+
+</h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">forward</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">params</span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Vectorized forward pass through all experts and the gating network.</p>
+
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Parameters:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li>
+              <b><code>x</code></b>
+                  (<code><span title="torch.Tensor">Tensor</span></code>)
+              –
+              <div class="doc-md-description">
+                <p>(batch_size, num_inputs)</p>
+              </div>
+            </li>
+            <li>
+              <b><code>params</code></b>
+                  (<code><span title="torch.Tensor">Tensor</span></code>)
+              –
+              <div class="doc-md-description">
+                <p>(num_samples, total_params)</p>
+              </div>
+            </li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Returns:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li>
+                  <code><span title="torch.Tensor">Tensor</span></code>
+              –
+              <div class="doc-md-description">
+                <p>Tensor of shape <code>(num_samples, batch_size, num_outputs)</code> containing</p>
+              </div>
+            </li>
+            <li>
+                  <code><span title="torch.Tensor">Tensor</span></code>
+              –
+              <div class="doc-md-description">
+                <p>the expert ensemble prediction for each draw of <code>params</code>.</p>
+              </div>
+            </li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="pypolymix.surrogate_models.mixture.MixtureOfExperts.get_expert_outputs" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">get_expert_outputs</span>
+
+
+</h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">get_expert_outputs</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">params</span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Evaluate each expert with the parameter slice assigned to it.</p>
+
+
+<table class="field-list">
+  <colgroup>
+    <col class="field-name" />
+    <col class="field-body" />
+  </colgroup>
+  <tbody valign="top">
+    <tr class="field">
+      <th class="field-name">Returns:</th>
+      <td class="field-body">
+        <ul class="first simple">
+            <li>
+                  <code><span title="torch.Tensor">Tensor</span></code>
+              –
+              <div class="doc-md-description">
+                <p>Tensor with shape <code>(num_samples, num_experts, batch_size, num_outputs)</code>.</p>
+              </div>
+            </li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="pypolymix.surrogate_models.mixture.MixtureOfExperts.get_gating_weights" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">get_gating_weights</span>
+
+
+</h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">get_gating_weights</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">params</span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Compute the mixture weights produced by the gating network.</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="pypolymix.surrogate_models.mixture.MixtureOfExperts.num_params" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">num_params</span>
+
+
+</h4>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">num_params</span><span class="p">()</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Total number of scalar parameters across all experts and gating network.</p>
+
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+
+</div>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../theo/" class="btn btn-neutral float-left" title="Theory"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../examples/pce/" class="btn btn-neutral float-right" title="Stochastic Polynomial Chaos Expansion">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href="../theo/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../examples/pce/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "..";</script>
+    <script src="../js/theme_extra.js"></script>
+    <script src="../js/theme.js"></script>
+      <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+      <script src="../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

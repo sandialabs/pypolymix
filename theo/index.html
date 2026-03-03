@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><link rel="canonical" href="https://sandialabs.github.io/pypolymix/theo/" />
+      <link rel="shortcut icon" href="../img/favicon.ico" />
+    <title>Theory - pypolymix</title>
+    <link rel="stylesheet" href="../css/theme.css" />
+    <link rel="stylesheet" href="../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+        <link href="../assets/_mkdocstrings.css" rel="stylesheet" />
+        <link href="../stylesheets/extra.css" rel="stylesheet" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Theory";
+        var mkdocs_page_input_path = "theo.md";
+        var mkdocs_page_url = "/pypolymix/theo/";
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="..">
+          <img src="../img/logo.png" class="logo" alt="Logo"/>
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="..">Home</a>
+                </li>
+              </ul>
+              <ul class="current">
+                <li class="toctree-l1 current"><a class="reference internal current" href="#">Theory</a>
+    <ul class="current">
+    </ul>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Package Reference</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../api/">API</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Examples</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../examples/pce/">Stochastic Polynomial Chaos Expansion</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../examples/langevin_pce/">Langevin Polynomial Chaos</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../examples/nn/">Stochastic Neural Network</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../examples/moe/">Stochastic Mixture of Experts</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../examples/full_covariance/">Full-Covariance Polynomial Chaos</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../examples/custom_priors/">Priors Guide Ambiguous Line Fits</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../examples/low_rank_covariance/">Low-Rank Covariance Polynomial Chaos</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Acknowledgements</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../ack/">Acknowledgements</a>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="..">pypolymix</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href=".." class="icon icon-home" aria-label="Docs"></a></li>
+      <li class="breadcrumb-item active">Theory</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="variational-inference">Variational Inference</h1>
+<p>Notations</p>
+<ul>
+<li>Observed data: <span class="arithmatex">\(\mathcal{D} =\{(x_i,y_i)\vert i=0,1,\ldots d-1\}\)</span></li>
+<li>Model parameters: <span class="arithmatex">\(\mathbf{c}=\{c_0,c_1,\ldots,c_{n-1}\}\)</span></li>
+<li>Likelihood &amp; prior densities: <span class="arithmatex">\(p(\mathcal{D}\vert\boldsymbol{c})\)</span> &amp; <span class="arithmatex">\(p(\boldsymbol{c})\)</span></li>
+<li>Posterior &amp; approximate posterior densities: <span class="arithmatex">\(p(\boldsymbol{c}\vert\mathcal{D})\)</span> &amp; <span class="arithmatex">\(q_{\boldsymbol{\theta}}(\boldsymbol{c})\)</span></li>
+</ul>
+<p>In a Bayesian framework, the posterior distribution for the parameters <span class="arithmatex">\(\boldsymbol{c}\)</span> of a model <span class="arithmatex">\(M\)</span> can be estimated as 
+$$
+p(\boldsymbol{c}\vert\mathcal{D}) \propto p(\mathcal{D}\vert\boldsymbol{c}) p(\boldsymbol{c})
+$$
+There are no closed-form solutions <span class="arithmatex">\(p(\boldsymbol{c}\vert\mathcal{D})\)</span> for generic models. Sampling the posterior distribution <span class="arithmatex">\(p(\boldsymbol{c}\vert\mathcal{D})\)</span> is typically hampered by high-dimensionality of <span class="arithmatex">\(\boldsymbol{c}\)</span> and the high computational cost to estimate the likelihood <span class="arithmatex">\(p(\mathcal{D}\vert\boldsymbol{c})\)</span> for a large number of model evaluations for example in Markov chain Monte Carlo schemes.</p>
+<p>To work around this challenge, instead of sampling or evaluating <span class="arithmatex">\(p(\boldsymbol{c}\vert\mathcal{D})\)</span>,  we will <em>approximate</em> it with a simpler distribution <span class="arithmatex">\(q_{\boldsymbol{\theta}}(\boldsymbol{c})\)</span>:
+$$
+p(\boldsymbol{c}\vert\mathcal{D}) \approx q_{\boldsymbol{\theta}}(\boldsymbol{c})
+$$
+where <span class="arithmatex">\(\boldsymbol{\theta}\)</span> are <em>variational parameters</em> to be optimized by minimizing the distance between the "true" and approximate distributions.  The algorithm works as follows:</p>
+<ul>
+<li>Choose a tractable family of distributions <span class="arithmatex">\(\mathcal{Q} = \{q_\boldsymbol{\theta} : \boldsymbol{\theta} \in \Theta\}\)</span></li>
+<li>Use KL divergence as the measure of closeness, i.e.</li>
+</ul>
+<p>$$
+\text{KL}(q_{\boldsymbol{\theta}}(\boldsymbol{c}) \parallel p(\boldsymbol{c}\vert\mathcal{D})) = \int_{\boldsymbol{c}} q_{\boldsymbol{\theta}}(\boldsymbol{c}) \log\frac{q_{\boldsymbol{\theta}}(\boldsymbol{c})}{p(\boldsymbol{c}\vert\mathcal{D}))}\,d\boldsymbol{c}
+$$
+to find <span class="arithmatex">\(\boldsymbol{\theta}^* \in \Theta\)</span> such that <span class="arithmatex">\(q_{\boldsymbol{\theta}^*}(\boldsymbol{c})\)</span> is closest to <span class="arithmatex">\(p(\boldsymbol{c}\vert\mathcal{D})\)</span> among all possible choices for <span class="arithmatex">\(\boldsymbol{\theta}\)</span>.</p>
+<p>The optimization algorithm uses the following <strong>E</strong>vidence <strong>L</strong>ower <strong>BO</strong>und (ELBO) expression for the loss function</p>
+<div class="arithmatex">\[
+\mathcal{L}(\boldsymbol{\theta}) = \mathbb{E}_{q}[\log p(\mathcal{D}\vert\boldsymbol{c})] - \text{KL}(q_{\boldsymbol{\theta}}(\boldsymbol{c})\parallel p(\boldsymbol{c})) + \text{const.}
+\]</div>
+<p>The current version of the library implements variational inference algorithms that assume Gaussian approximate posteriors, i.e. for <span class="arithmatex">\(\mathcal{Q}\)</span>, as well as a Gausian likelihood. For the prior distribution <span class="arithmatex">\(p(\boldsymbol{c})\)</span>, both uniform and Gaussian distributions are implemented.</p>
+<p>For the case where both the approximate posterior and the prior are multivariate Gaussian distributions</p>
+<div class="arithmatex">\[
+q_{\boldsymbol{\theta}}(\boldsymbol{c})=\mathcal{N}(\boldsymbol{c} \mid \boldsymbol{\mu}_\boldsymbol{\theta},\boldsymbol{\Sigma}_{\boldsymbol{\theta}}),\,\,
+p(\boldsymbol{c}) = \mathcal{N}(\boldsymbol{c} \mid \boldsymbol{\mu}_{p}, \boldsymbol{\Sigma}_{p}),
+\]</div>
+<p>the KL divergence can be computed analytically as</p>
+<div class="arithmatex">\[
+\text{KL}(q_{\boldsymbol{\theta}}(\boldsymbol{c}) \parallel p(\boldsymbol{c})) = \frac{1}{2}\left[\text{tr}(\boldsymbol{\Sigma}_p^{-1}\boldsymbol{\Sigma}_{\boldsymbol{\theta}}) + (\boldsymbol{\mu}_p - \boldsymbol{\mu}_{\boldsymbol{\theta}})^\top\boldsymbol{\Sigma}_p^{-1}(\boldsymbol{\mu}_p - \boldsymbol{\mu}_{\boldsymbol{\theta}}) - n + \log\frac{|\boldsymbol{\Sigma}_p|}{|\boldsymbol{\Sigma}_{\boldsymbol{\theta}}|}\right]
+\]</div>
+<p>If the prior is uniform, the above expression reduces to</p>
+<div class="arithmatex">\[
+\text{KL}(q_{\boldsymbol{\theta}}(\boldsymbol{c}) \parallel p(\boldsymbol{c}))=- \frac{1}{2}\log|\boldsymbol{\Sigma}_{\boldsymbol{\theta}}|+\text{const.}
+\]</div>
+<p>The first term on the right-hand side of the ELBO function</p>
+<div class="arithmatex">\[
+\mathbb{E}_{q}[\log p(\mathcal{D}\vert\boldsymbol{c})]\approx 
+\frac{1}{N_s}\sum_{k=1}^{N_s}\log p(\mathcal{D}\vert\boldsymbol{c}_k)
+\]</div>
+<p>with samples <span class="arithmatex">\(\boldsymbol{c}_k\)</span> drawn from <span class="arithmatex">\(\mathcal{N}(\mu_\boldsymbol{\theta},\Sigma_\boldsymbol{\theta})\)</span>. Using the reparametrization trick, </p>
+<div class="arithmatex">\[
+\boldsymbol{c} = \mu_\boldsymbol{\theta} + L\boldsymbol{\epsilon}
+\]</div>
+<p>where <span class="arithmatex">\(\boldsymbol{\epsilon}\propto\mathcal{N}(\boldsymbol{0},\mathbb{I})\)</span> and <span class="arithmatex">\(L\)</span> is the lower-triangular matrix resulted from the Cholesky decomposition of <span class="arithmatex">\(\Sigma_\boldsymbol{\theta}\)</span>, i.e. <span class="arithmatex">\(\Sigma_\boldsymbol{\theta}=L L^T\)</span>. The expected log-likelihood expression above becomes</p>
+<div class="arithmatex">\[
+\mathbb{E}_{q}[\log p(\mathcal{D}\vert\boldsymbol{c})]=\mathbb{E}_{\boldsymbol{\epsilon}}[\log p(\mathcal{D}\vert\mu_\boldsymbol{\theta} + L\boldsymbol{\epsilon})]\approx 
+\frac{1}{N_s}\sum_{k=1}^{N_s}\log p(\mathcal{D}\vert\mu_\boldsymbol{\theta} + L\boldsymbol{\epsilon}_k).
+\]</div>
+<p>Gradients with respect to <span class="arithmatex">\(\boldsymbol{\theta}\)</span> components <span class="arithmatex">\(\mu_{\boldsymbol{\theta}}\)</span> and <span class="arithmatex">\(\Sigma_\boldsymbol{\theta}\)</span>, are estimated through automatic differentiation tools if the model that depends of parameters <span class="arithmatex">\(\boldsymbol{c}\)</span> is differentiable.</p>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href=".." class="btn btn-neutral float-left" title="Home"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../api/" class="btn btn-neutral float-right" title="API">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href=".." style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../api/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "..";</script>
+    <script src="../js/theme_extra.js"></script>
+    <script src="../js/theme.js"></script>
+      <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+      <script src="../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>
