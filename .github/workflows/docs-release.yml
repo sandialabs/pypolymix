@@ -1,6 +1,9 @@
 name: Publish Docs
 
 on:
+  push:
+    tags:
+      - "v*"
   release:
     types: [published]
 
