@@ -8,13 +8,13 @@ nav:
     - API: api.md
   - Examples:
     - Polynomial Chaos Expansion: examples/pce.ipynb
-    - Langevin Polynomial Chaos: examples/langevin_pce.ipynb
-    - Langevin PCE Score Model: examples/langevin_pce_score_pce.ipynb
     - Neural Network: examples/nn.ipynb
     - Mixture of Experts: examples/moe.ipynb
     - Full Covariance: examples/full_covariance.ipynb
     - Custom Priors: examples/custom_priors.ipynb
     - Low Rank Covariance: examples/low_rank_covariance.ipynb
+    - Langevin Score Polynomial Chaos: examples/langevin_score_pce.ipynb
+    - Langevin Energy Polynomial Chaos: examples/langevin_energy_pce.ipynb
   - Acknowledgements: 
     - Acknowledgements: ack.md
 
