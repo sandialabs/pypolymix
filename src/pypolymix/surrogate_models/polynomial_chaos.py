@@ -9,7 +9,7 @@ from .base import SurrogateModel
 
 
 class PolynomialChaosExpansion(SurrogateModel):
-    """Polynomial chaos expansion with Legendre basis.
+    """Polynomial chaos expansion with configurable orthogonal polynomial basis.
 
     Example:
         ```python
@@ -21,12 +21,21 @@ class PolynomialChaosExpansion(SurrogateModel):
         ```
     """
 
-    def __init__(self, num_inputs: int, num_outputs: int = 1, degree: int = 3):
+    def __init__(
+        self,
+        num_inputs: int,
+        num_outputs: int = 1,
+        degree: int = 3,
+        basis: str = "legendre",
+    ):
         """Pre-compute the index set for a total-order polynomial basis."""
         super().__init__()
         self.num_inputs = num_inputs
         self.num_outputs = num_outputs
         self.degree = degree
+        self.basis = basis.lower()
+        if self.basis not in {"legendre", "hermite"}:
+            raise ValueError(f"Unsupported basis '{basis}'. Expected 'legendre' or 'hermite'.")
 
         # Precompute multi-indices and store as a buffer
         self.register_buffer("multi_indices", self._get_indices())
@@ -68,7 +77,7 @@ class PolynomialChaosExpansion(SurrogateModel):
         for j, multi_index in enumerate(self.multi_indices):
             col = torch.ones(batch_size, device=x.device)
             for dim in range(self.num_inputs):
-                col = col * legendre_polynomial_p(x[:, dim], multi_index[dim])
+                col = col * polynomial_basis(x[:, dim], int(multi_index[dim]), basis=self.basis)
             basis_values[:, j] = col
 
         # Now compute y = basis_values @ c for each sample and each output dim
@@ -103,7 +112,7 @@ def legendre_polynomial_p(x: torch.Tensor, n: int) -> torch.Tensor:
     if n < 0:
         raise ValueError("Degree n must be non-negative.")
 
-    if hasattr(torch.special, "legendre_polynomial_p"):
+    if hasattr(torch.special, "legendre_polynomial_p") and x.device.type != "mps":
         return torch.special.legendre_polynomial_p(x, n)
     else:
         # Base cases
@@ -122,3 +131,35 @@ def legendre_polynomial_p(x: torch.Tensor, n: int) -> torch.Tensor:
             P_0, P_1 = P_1, P_n  # Update for the next iteration
 
         return P_n
+
+
+def hermite_polynomial_he(x: torch.Tensor, n: int) -> torch.Tensor:
+    """Compute the probabilists' Hermite polynomial ``He_n(x)``."""
+    if n < 0:
+        raise ValueError("Degree n must be non-negative.")
+
+    if hasattr(torch.special, "hermite_polynomial_h") and x.device.type != "mps":
+        sqrt_two = torch.sqrt(torch.tensor(2.0, device=x.device, dtype=x.dtype))
+        return torch.special.hermite_polynomial_h(x / sqrt_two, n) / (sqrt_two**n)
+
+    if n == 0:
+        return torch.ones_like(x)
+    if n == 1:
+        return x
+
+    H_0 = torch.ones_like(x)
+    H_1 = x
+    for k in range(2, n + 1):
+        H_n = x * H_1 - (k - 1) * H_0
+        H_0, H_1 = H_1, H_n
+
+    return H_n
+
+
+def polynomial_basis(x: torch.Tensor, n: int, basis: str) -> torch.Tensor:
+    """Dispatch to the requested 1D polynomial family."""
+    if basis == "legendre":
+        return legendre_polynomial_p(x, n)
+    if basis == "hermite":
+        return hermite_polynomial_he(x, n)
+    raise ValueError(f"Unsupported basis '{basis}'. Expected 'legendre' or 'hermite'.")

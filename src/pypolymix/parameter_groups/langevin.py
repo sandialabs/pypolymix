@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from typing import Optional
+import warnings
 
 import torch
 import torch.distributions as td
@@ -44,6 +45,7 @@ class LangevinGroup(ParameterGroup):
         num_diffusion_steps: int = 50,
         step_size: float = 1e-3,
         init_std: float = 1.0,
+        theta_clip: float | None = None,
     ):
         super().__init__(name, num_params, prior=prior)
 
@@ -55,6 +57,8 @@ class LangevinGroup(ParameterGroup):
             raise ValueError("step_size must be > 0")
         if init_std <= 0.0:
             raise ValueError("init_std must be > 0")
+        if theta_clip is not None and theta_clip <= 0.0:
+            raise ValueError("theta_clip must be > 0 when provided")
 
         if not hasattr(score_model, "num_inputs") or not hasattr(score_model, "num_outputs"):
             raise ValueError(
@@ -74,16 +78,53 @@ class LangevinGroup(ParameterGroup):
         self.num_diffusion_steps = int(num_diffusion_steps)
         self.step_size = float(step_size)
         self.init_std = float(init_std)
+        self.theta_clip = None if theta_clip is None else float(theta_clip)
 
         # Deterministic parameter vector for the score surrogate.
         self.score_params = nn.Parameter(torch.randn(score_model.num_params()) * 0.01)
         self._last_samples: Optional[torch.Tensor] = None
+
+    def _fresh_particles(self, num_particles: int, device: torch.device, dtype: torch.dtype) -> torch.Tensor:
+        """Draw fresh particles from the Langevin initializer."""
+        return torch.randn(num_particles, self.num_params, device=device, dtype=dtype) * self.init_std
+
+    def _replace_invalid_rows(
+        self,
+        tensor: torch.Tensor,
+        valid_rows: torch.Tensor,
+        *,
+        stage: str,
+    ) -> torch.Tensor:
+        """Replace non-finite particle rows with fresh initial draws."""
+        if valid_rows.all():
+            return tensor
+
+        repaired = tensor.clone()
+        num_bad = int((~valid_rows).sum().item())
+        repaired[~valid_rows] = self._fresh_particles(num_bad, tensor.device, tensor.dtype)
+        warnings.warn(
+            f"LangevinGroup detected {num_bad} non-finite particle trajectories during {stage}; "
+            "restarting those rows from the initializer.",
+            RuntimeWarning,
+            stacklevel=2,
+        )
+        return repaired
 
     def _score(self, theta: torch.Tensor) -> torch.Tensor:
         """Evaluate the learned score model on a batch of particles."""
         model_params = self.score_params.unsqueeze(0)  # (1, n_score_params)
         score = self.score_model(theta, model_params).squeeze(0)  # (n_particles, num_params)
         return score
+
+    def _clip_theta_norm(self, theta: torch.Tensor) -> torch.Tensor:
+        """Clip particle norms row-wise before score evaluation."""
+        if self.theta_clip is None:
+            return theta
+
+        norms = theta.norm(dim=1, keepdim=True)
+        safe_norms = norms.clamp_min(torch.finfo(theta.dtype).eps)
+        scales = torch.clamp(self.theta_clip / safe_norms, max=1.0)
+        return theta * scales
 
     def sample_parameters(self, num_samples: int | None = None) -> torch.Tensor:
         """Draw parameter samples by running Langevin dynamics."""
@@ -94,13 +135,47 @@ class LangevinGroup(ParameterGroup):
 
         device = self.score_params.device
         dtype = self.score_params.dtype
-        theta = torch.randn(num_samples, self.num_params, device=device, dtype=dtype) * self.init_std
+        theta = self._fresh_particles(num_samples, device, dtype)
         noise_scale = torch.sqrt(torch.tensor(2.0 * self.step_size, device=device, dtype=dtype))
 
-        for _ in range(self.num_diffusion_steps):
-            drift = self.step_size * self._score(theta)
+        for step in range(self.num_diffusion_steps):
+            theta = self._clip_theta_norm(theta)
+            score = self._score(theta)
+            valid_score = torch.isfinite(score).all(dim=1)
+            if not valid_score.all():
+                bad = int((~valid_score).sum().item())
+                print(
+                    f"[LangevinGroup] non-finite score at step {step}: "
+                    f"{bad}/{num_samples} invalid rows, "
+                    f"max|theta|={torch.nan_to_num(theta).abs().max().item():.3e}, "
+                    f"max|score|={torch.nan_to_num(score).abs().max().item():.3e}"
+                )
+                theta = self._replace_invalid_rows(theta, valid_score, stage="score evaluation")
+                score = self._score(theta)
+            drift = self.step_size * score
+            valid_drift = torch.isfinite(drift).all(dim=1)
+            if not valid_drift.all():
+                bad = int((~valid_drift).sum().item())
+                print(
+                    f"[LangevinGroup] non-finite drift at step {step}: "
+                    f"{bad}/{num_samples} invalid rows, "
+                    f"step_size={self.step_size:.3e}, "
+                    f"max|score|={torch.nan_to_num(score).abs().max().item():.3e}, "
+                    f"max|drift|={torch.nan_to_num(drift).abs().max().item():.3e}"
+                )
             diffusion = noise_scale * torch.randn_like(theta)
             theta = theta + drift + diffusion
+            valid_theta = torch.isfinite(theta).all(dim=1)
+            if not valid_theta.all():
+                bad = int((~valid_theta).sum().item())
+                print(
+                    f"[LangevinGroup] non-finite particles after update at step {step}: "
+                    f"{bad}/{num_samples} invalid rows, "
+                    f"max|drift|={torch.nan_to_num(drift).abs().max().item():.3e}, "
+                    f"max|diffusion|={torch.nan_to_num(diffusion).abs().max().item():.3e}, "
+                    f"max|theta|={torch.nan_to_num(theta).abs().max().item():.3e}"
+                )
+                theta = self._replace_invalid_rows(theta, valid_theta, stage="Langevin update")
 
         self._last_samples = theta
         return theta

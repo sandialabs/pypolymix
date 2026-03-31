@@ -112,8 +112,8 @@ parameters.
 
 ### PolynomialChaosExpansion
 
-Legendre polynomial chaos expansion with configurable dimension, degree, and
-number of outputs.
+Polynomial chaos expansion with selectable Legendre or probabilists' Hermite
+basis, configurable dimension, degree, and number of outputs.
 
 ::: pypolymix.surrogate_models.polynomial_chaos.PolynomialChaosExpansion
 
