@@ -1,4 +1,4 @@
-"""Implicit Langevin parameter group driven by a learned score surrogate."""
+"""Implicit Langevin parameter group driven by a learned score or energy surrogate."""
 
 from __future__ import annotations
 
@@ -16,7 +16,8 @@ from .base import ParameterGroup
 class LangevinGroup(ParameterGroup):
     """Parameter group based on unadjusted Langevin dynamics.
 
-    The group learns a score model ``s(theta)`` and generates samples by iterating:
+    The group learns either a score model ``s(theta)`` or an energy model
+    ``E(theta)`` and generates samples by iterating:
 
     ``theta_{k+1} = theta_k + step_size * s(theta_k) + sqrt(2 * step_size) * xi_k``
 
@@ -37,7 +38,8 @@ class LangevinGroup(ParameterGroup):
         self,
         name: str,
         num_params: int,
-        score_model: SurrogateModel,
+        score_model: Optional[SurrogateModel] = None,
+        energy_model: Optional[SurrogateModel] = None,
         prior: Optional[Prior] = None,
         *,
         num_particles: int = 32,
@@ -56,33 +58,65 @@ class LangevinGroup(ParameterGroup):
         if init_std <= 0.0:
             raise ValueError("init_std must be > 0")
 
-        if not hasattr(score_model, "num_inputs") or not hasattr(score_model, "num_outputs"):
-            raise ValueError(
-                "score_model must define 'num_inputs' and 'num_outputs' attributes to validate dimensions."
-            )
-        if score_model.num_inputs != num_params:
-            raise ValueError(
-                f"score_model.num_inputs ({score_model.num_inputs}) must equal num_params ({num_params})."
-            )
-        if score_model.num_outputs != num_params:
-            raise ValueError(
-                f"score_model.num_outputs ({score_model.num_outputs}) must equal num_params ({num_params})."
-            )
+        if (score_model is None) == (energy_model is None):
+            raise ValueError("Provide exactly one of score_model or energy_model.")
 
         self.score_model = score_model
+        self.energy_model = energy_model
         self.num_particles = int(num_particles)
         self.num_diffusion_steps = int(num_diffusion_steps)
         self.step_size = float(step_size)
         self.init_std = float(init_std)
 
-        # Deterministic parameter vector for the score surrogate.
-        self.score_params = nn.Parameter(torch.randn(score_model.num_params()) * 0.01)
+        surrogate = score_model if score_model is not None else energy_model
+        self._mode = "score" if score_model is not None else "energy"
+        self._validate_surrogate(surrogate)
+
+        # Deterministic parameter vector for the score/energy surrogate.
+        self.surrogate_params = nn.Parameter(torch.randn(surrogate.num_params()) * 0.01)
         self._last_samples: Optional[torch.Tensor] = None
 
+    def _validate_surrogate(self, surrogate_model: SurrogateModel) -> None:
+        """Validate the score or energy surrogate dimensions."""
+        if not hasattr(surrogate_model, "num_inputs") or not hasattr(surrogate_model, "num_outputs"):
+            raise ValueError(
+                "Langevin surrogate must define 'num_inputs' and 'num_outputs' attributes to validate dimensions."
+            )
+        if surrogate_model.num_inputs != self.num_params:
+            raise ValueError(
+                f"Langevin surrogate num_inputs ({surrogate_model.num_inputs}) must equal num_params ({self.num_params})."
+            )
+
+        expected_outputs = self.num_params if self._mode == "score" else 1
+        if surrogate_model.num_outputs != expected_outputs:
+            raise ValueError(
+                f"{self._mode}_model.num_outputs ({surrogate_model.num_outputs}) must equal {expected_outputs}."
+            )
+
+    def _energy(self, theta: torch.Tensor) -> torch.Tensor:
+        """Evaluate the learned scalar energy/log-density surrogate."""
+        if self.energy_model is None:
+            raise RuntimeError("energy_model is not configured for this LangevinGroup.")
+
+        model_params = self.surrogate_params.unsqueeze(0)
+        energy = self.energy_model(theta, model_params).squeeze(0).squeeze(-1)
+        return energy
+
     def _score(self, theta: torch.Tensor) -> torch.Tensor:
-        """Evaluate the learned score model on a batch of particles."""
-        model_params = self.score_params.unsqueeze(0)  # (1, n_score_params)
-        score = self.score_model(theta, model_params).squeeze(0)  # (n_particles, num_params)
+        """Evaluate the learned score field on a batch of particles."""
+        if self.score_model is not None:
+            model_params = self.surrogate_params.unsqueeze(0)  # (1, n_surrogate_params)
+            return self.score_model(theta, model_params).squeeze(0)  # (n_particles, num_params)
+
+        create_graph = torch.is_grad_enabled()
+        theta_for_grad = theta if theta.requires_grad else theta.detach().requires_grad_(True)
+        with torch.enable_grad():
+            energy = self._energy(theta_for_grad)
+            score = torch.autograd.grad(
+                outputs=energy.sum(),
+                inputs=theta_for_grad,
+                create_graph=create_graph,
+            )[0]
         return score
 
     def sample_parameters(self, num_samples: int | None = None) -> torch.Tensor:
@@ -92,8 +126,8 @@ class LangevinGroup(ParameterGroup):
         if num_samples <= 0:
             raise ValueError("num_samples must be > 0")
 
-        device = self.score_params.device
-        dtype = self.score_params.dtype
+        device = self.surrogate_params.device
+        dtype = self.surrogate_params.dtype
         theta = torch.randn(num_samples, self.num_params, device=device, dtype=dtype) * self.init_std
         noise_scale = torch.sqrt(torch.tensor(2.0 * self.step_size, device=device, dtype=dtype))
 

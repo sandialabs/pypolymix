@@ -71,12 +71,17 @@ Implicit posterior sampler driven by unadjusted Langevin dynamics:
 `LangevinGroup` keeps the same `ParameterGroup` interface and can be mixed with
 the other groups inside `StochasticModel`.
 
-The score model is passed in as any `SurrogateModel` satisfying:
+You can parameterize the drift in either of two ways:
 
-- `score_model.num_inputs == num_params`
-- `score_model.num_outputs == num_params`
+- `score_model`: any `SurrogateModel` satisfying
+  `score_model.num_inputs == num_params` and
+  `score_model.num_outputs == num_params`
+- `energy_model`: any `SurrogateModel` satisfying
+  `energy_model.num_inputs == num_params` and
+  `energy_model.num_outputs == 1`; `LangevinGroup` then uses automatic
+  differentiation to compute `score(theta) = grad_theta energy(theta)`
 
-`NeuralNetwork` is the most common choice for this role.
+`NeuralNetwork` is the most common choice for either role.
 
 ::: pypolymix.parameter_groups.langevin.LangevinGroup
 
