@@ -33,9 +33,11 @@ class PolynomialChaosExpansion(SurrogateModel):
         self.num_inputs = num_inputs
         self.num_outputs = num_outputs
         self.degree = degree
-        self.basis = basis.lower()
-        if self.basis not in {"legendre", "hermite"}:
-            raise ValueError(f"Unsupported basis '{basis}'. Expected 'legendre' or 'hermite'.")
+        self.basis = basis.lower().replace("-", "_")
+        if self.basis not in {"legendre", "hermite", "squared_exponential"}:
+            raise ValueError(
+                f"Unsupported basis '{basis}'. Expected 'legendre', 'hermite', or 'squared_exponential'."
+            )
 
         # Precompute multi-indices and store as a buffer
         self.register_buffer("multi_indices", self._get_indices())
@@ -68,17 +70,12 @@ class PolynomialChaosExpansion(SurrogateModel):
         """
         batch_size = x.shape[0]
 
-        # Evaluate basis
-        basis_values = torch.ones(
-            (batch_size, self.num_terms),
-            dtype=torch.get_default_dtype(),
-            device=x.device,
-        )  # (batch_size, num_terms)
-        for j, multi_index in enumerate(self.multi_indices):
-            col = torch.ones(batch_size, device=x.device)
-            for dim in range(self.num_inputs):
-                col = col * polynomial_basis(x[:, dim], int(multi_index[dim]), basis=self.basis)
-            basis_values[:, j] = col
+        # Evaluate each 1D basis family once per input dimension, then gather the
+        # degrees needed by every multi-index term.
+        basis_values = torch.ones(batch_size, self.num_terms, device=x.device, dtype=x.dtype)
+        for dim in range(self.num_inputs):
+            basis_family = polynomial_basis_family(x[:, dim], self.degree, basis=self.basis)
+            basis_values = basis_values * basis_family[:, self.multi_indices[:, dim]]
 
         # Now compute y = basis_values @ c for each sample and each output dim
         # basis_values: (batch_size, num_terms)
@@ -112,35 +109,44 @@ def legendre_polynomial_p(x: torch.Tensor, n: int) -> torch.Tensor:
     if n < 0:
         raise ValueError("Degree n must be non-negative.")
 
-    if hasattr(torch.special, "legendre_polynomial_p") and x.device.type != "mps":
-        return torch.special.legendre_polynomial_p(x, n)
-    else:
-        # Base cases
-        if n == 0:
-            return torch.ones_like(x)  # P_0(x) = 1
-        elif n == 1:
-            return x  # P_1(x) = x
+    # Use the recurrence directly to preserve autograd w.r.t. x.
+    if n == 0:
+        return torch.ones_like(x)  # P_0(x) = 1
+    elif n == 1:
+        return x  # P_1(x) = x
 
-        # Initialize P_0 and P_1
-        P_0 = torch.ones_like(x)
-        P_1 = x
+    # Initialize P_0 and P_1
+    P_0 = torch.ones_like(x)
+    P_1 = x
 
-        # Compute P_n using the recurrence relation
-        for k in range(2, n + 1):
-            P_n = ((2 * k - 1) * x * P_1 - (k - 1) * P_0) / k
-            P_0, P_1 = P_1, P_n  # Update for the next iteration
+    # Compute P_n using the recurrence relation
+    for k in range(2, n + 1):
+        P_n = ((2 * k - 1) * x * P_1 - (k - 1) * P_0) / k
+        P_0, P_1 = P_1, P_n  # Update for the next iteration
 
-        return P_n
+    return P_n
+
+
+def legendre_polynomial_family(x: torch.Tensor, max_degree: int) -> torch.Tensor:
+    """Compute Legendre polynomials ``P_0`` through ``P_max_degree``."""
+    if max_degree < 0:
+        raise ValueError("max_degree must be non-negative.")
+
+    values = [torch.ones_like(x)]
+    if max_degree == 0:
+        return torch.stack(values, dim=1)
+
+    values.append(x)
+    for k in range(2, max_degree + 1):
+        values.append(((2 * k - 1) * x * values[k - 1] - (k - 1) * values[k - 2]) / k)
+
+    return torch.stack(values, dim=1)
 
 
 def hermite_polynomial_he(x: torch.Tensor, n: int) -> torch.Tensor:
     """Compute the probabilists' Hermite polynomial ``He_n(x)``."""
     if n < 0:
         raise ValueError("Degree n must be non-negative.")
-
-    if hasattr(torch.special, "hermite_polynomial_h") and x.device.type != "mps":
-        sqrt_two = torch.sqrt(torch.tensor(2.0, device=x.device, dtype=x.dtype))
-        return torch.special.hermite_polynomial_h(x / sqrt_two, n) / (sqrt_two**n)
 
     if n == 0:
         return torch.ones_like(x)
@@ -156,10 +162,64 @@ def hermite_polynomial_he(x: torch.Tensor, n: int) -> torch.Tensor:
     return H_n
 
 
+def hermite_polynomial_family(x: torch.Tensor, max_degree: int) -> torch.Tensor:
+    """Compute probabilists' Hermite polynomials ``He_0`` through ``He_max_degree``."""
+    if max_degree < 0:
+        raise ValueError("max_degree must be non-negative.")
+
+    values = [torch.ones_like(x)]
+    if max_degree == 0:
+        return torch.stack(values, dim=1)
+
+    values.append(x)
+    for k in range(2, max_degree + 1):
+        values.append(x * values[k - 1] - (k - 1) * values[k - 2])
+
+    return torch.stack(values, dim=1)
+
+
+def squared_exponential_polynomial_basis(x: torch.Tensor, n: int) -> torch.Tensor:
+    """Compute a bounded squared-exponential basis term ``x^n exp(-x^2 / 2)``."""
+    if n < 0:
+        raise ValueError("Degree n must be non-negative.")
+
+    envelope = torch.exp(-0.5 * x.square())
+    if n == 0:
+        return envelope
+    return envelope * x.pow(n)
+
+
+def squared_exponential_polynomial_family(x: torch.Tensor, max_degree: int) -> torch.Tensor:
+    """Compute ``x^n exp(-x^2 / 2)`` for ``n = 0, ..., max_degree``."""
+    if max_degree < 0:
+        raise ValueError("max_degree must be non-negative.")
+
+    envelope = torch.exp(-0.5 * x.square())
+    values = [envelope]
+    for n in range(1, max_degree + 1):
+        values.append(values[n - 1] * x)
+
+    return torch.stack(values, dim=1)
+
+
 def polynomial_basis(x: torch.Tensor, n: int, basis: str) -> torch.Tensor:
     """Dispatch to the requested 1D polynomial family."""
     if basis == "legendre":
         return legendre_polynomial_p(x, n)
     if basis == "hermite":
         return hermite_polynomial_he(x, n)
-    raise ValueError(f"Unsupported basis '{basis}'. Expected 'legendre' or 'hermite'.")
+    if basis == "squared_exponential":
+        return squared_exponential_polynomial_basis(x, n)
+    raise ValueError(f"Unsupported basis '{basis}'. Expected 'legendre', 'hermite', or 'squared_exponential'.")
+
+
+def polynomial_basis_family(x: torch.Tensor, max_degree: int, basis: str) -> torch.Tensor:
+    """Compute all 1D basis values up to ``max_degree`` for the requested family."""
+    if basis == "legendre":
+        return legendre_polynomial_family(x, max_degree)
+    if basis == "hermite":
+        return hermite_polynomial_family(x, max_degree)
+    if basis == "squared_exponential":
+        return squared_exponential_polynomial_family(x, max_degree)
+    raise ValueError(f"Unsupported basis '{basis}'. Expected 'legendre', 'hermite', or 'squared_exponential'.")
+
