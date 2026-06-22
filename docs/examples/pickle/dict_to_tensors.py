@@ -1,6 +1,7 @@
 import torch
 import numpy as np
 
+# TODO also return the object property names for more generality
 def dict_to_tensors(obj):
     '''
     Input schema
