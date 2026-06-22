@@ -13,7 +13,7 @@ if __name__ == "__main__":
         }
     }
     X, Y = dict_to_tensors(obj)
-    print(X)
+    
     assert isinstance(X, torch.Tensor)
     assert isinstance(Y, torch.Tensor)
     
@@ -24,5 +24,5 @@ if __name__ == "__main__":
     # X and Y are the correct values
     assert torch.allclose(X, torch.tensor([[1, 1], [2, 2], [3, 3]], dtype=torch.float32))
     assert torch.allclose(Y, torch.tensor([[4], [5], [6]], dtype=torch.float32))
-    
+
     print("All Tests Pass")

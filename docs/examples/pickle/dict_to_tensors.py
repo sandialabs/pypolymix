@@ -1,6 +1,7 @@
 # use: uv run python print_pickle.py path/to/file
 # PATH is the path to the .pickle file
 import torch
+import numpy as np
 
 def dict_to_tensors(obj):
     '''
@@ -24,6 +25,9 @@ def dict_to_tensors(obj):
     '''
     output_dict = obj["data"]["U"]
     input_dict = {k: v for k, v in obj["data"].items() if k != "U"}
-    X = torch.tensor(list(input_dict.values()), dtype=torch.float32).T
-    Y = torch.tensor(list(output_dict.values()), dtype=torch.float32).T
-    return X,Y
+
+    # conversion to numpy.ndarray done because of a warning that
+    # creating a tensor from a list of numpy.ndarrays is extremely slow
+    X_np = np.column_stack(list(input_dict.values())).astype(np.float32)
+    Y_np = np.column_stack(list(output_dict.values())).astype(np.float32)
+    return torch.from_numpy(X_np), torch.from_numpy(Y_np)
