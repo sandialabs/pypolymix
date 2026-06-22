@@ -7,12 +7,12 @@ def dict_to_tensors(obj):
     Input schema
     {
         'data': {
-            'var1': [values...],  # Input variable 1
-            'var2': [values...],  # Input variable 2
+            'var1': np.array([values...]),  # Input variable 1
+            'var2': np.array([values...]),  # Input variable 2
             ...
             'U': {
-                'output1': [values...],  # Output variable 1
-                'output2': [values...],  # Output variable 2
+                'output1': np.array([values...]),  # Output variable 1
+                'output2': np.array([values...]),  # Output variable 2
                 ...
             }
         }
@@ -24,9 +24,6 @@ def dict_to_tensors(obj):
     '''
     output_dict = obj["data"]["U"]
     input_dict = {k: v for k, v in obj["data"].items() if k != "U"}
-    
-    X_cols = [[torch.tensor(arr, dtype=torch.float32)] for arr in input_dict.values()]
-    Y_cols = [[torch.tensor(arr, dtype=torch.float32)] for arr in output_dict.values()]
-    X = torch.hstack(X_cols)
-    Y = torch.hstack(Y_cols)
+    X = torch.tensor(list(input_dict.values()), dtype=torch.float32).T
+    Y = torch.tensor(list(output_dict.values()), dtype=torch.float32).T
     return X,Y
