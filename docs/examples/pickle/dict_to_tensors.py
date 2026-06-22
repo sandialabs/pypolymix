@@ -1,5 +1,3 @@
-# use: uv run python print_pickle.py path/to/file
-# PATH is the path to the .pickle file
 import torch
 import numpy as np
 
