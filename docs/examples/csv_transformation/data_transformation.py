@@ -318,12 +318,11 @@ def make_gui_error_visualization_files(
     print()
     print(f"Rows written: {len(x)}")
 
-
-
 def main():
     parser = argparse.ArgumentParser(
         description="""Generate GUI-compatible visualization files from prediction and reference CSV data.
-Outputs 3 files in a new folder called training_results_<input1>_<input2>.
+Outputs 3 files in the specified output folder, or in a new folder called
+training_results_<input1>_<input2> if no output folder is provided.
 - data.pickle: can be loaded into the GUI with "load data"
 - train_output.pickle: the training results. Can be loaded into the GUI with "load training"
 - SM.pickle: A supplementary file that the GUI requires to be in the same directory as train_output.pickle""",
@@ -345,6 +344,16 @@ Outputs 3 files in a new folder called training_results_<input1>_<input2>.
         help="Second input variable to visualize.",
     )
 
+    parser.add_argument(
+        "output_dir",
+        nargs="?",
+        default=None,
+        help=(
+            "Directory where output files will be written. "
+            "If omitted, defaults to training_results_<input1>_<input2>."
+        ),
+    )
+
     args = parser.parse_args()
 
     df = pd.read_csv(args.csv_file)
@@ -353,6 +362,7 @@ Outputs 3 files in a new folder called training_results_<input1>_<input2>.
         df,
         input_x=args.input_variable_1,
         input_y=args.input_variable_2,
+        output_dir=args.output_dir,
         n_samples=50_000,
         x_scale="auto",
         y_scale="auto",
