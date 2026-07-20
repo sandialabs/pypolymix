@@ -410,6 +410,7 @@ or in a new folder called reference_results<input1>_<input2> if no output folder
         df,
         input_x=args.input_variable_1.replace('input_', ''),
         input_y=args.input_variable_2.replace('input_', ''),
+        output_dir=args.output_dir,
         n_samples=50_000,
         x_scale="auto",
         y_scale="auto",
