@@ -61,7 +61,7 @@ example format:
 
 ## GUI Training Results Data Structure
 
-For visualizing training results, the GUI requires two files: `train_output.pickle` and `SM.pickle`. We store these files in ./training_results/.
+For visualizing training results, the GUI requires two files: `train_output.pickle` and `SM.pickle`. We store these files in a specified directory, or ./training_results_<input1>_<input2> if none is specified.
 
 #### `train_output.pickle`
 
