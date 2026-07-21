@@ -44,7 +44,8 @@ Issues = "https://github.com/sandialabs/pypolymix/issues"
 examples = [
     "ipykernel (>=6.30.1,<7.0.0)",
     "matplotlib (>=3.10.6,<4.0.0)",
-    "papermill (>=2.6.0,<3.0.0)"
+    "papermill (>=2.6.0,<3.0.0)",
+    "pandas>=2.3.3",
 ]
 docs = [
     "mkdocs (>=1.6.1,<2.0.0)",
@@ -64,6 +65,7 @@ packages = [{include = "pypolymix", from = "src"}]
 ipykernel = ">=6.30.1,<7.0.0"
 matplotlib = ">=3.10.6,<4.0.0"
 papermill = ">=2.6.0,<3.0.0"
+pandas = ">=2.3.3"
 
 [tool.poetry.group.docs.dependencies]
 mkdocs = ">=1.6.1,<2.0.0"
