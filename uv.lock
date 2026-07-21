@@ -2792,8 +2792,6 @@ name = "pypolymix"
 version = "0.1.6"
 source = { editable = "." }
 dependencies = [
-    { name = "pandas", version = "2.3.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
-    { name = "pandas", version = "3.0.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
     { name = "torch" },
 ]
 
@@ -2810,6 +2808,8 @@ docs = [
 examples = [
     { name = "ipykernel" },
     { name = "matplotlib" },
+    { name = "pandas", version = "2.3.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
+    { name = "pandas", version = "3.0.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
     { name = "papermill" },
 ]
 
@@ -2821,7 +2821,7 @@ requires-dist = [
     { name = "mkdocs-jupyter", marker = "extra == 'docs'", specifier = ">=0.25.1,<0.26.0" },
     { name = "mkdocs-material", marker = "extra == 'docs'", specifier = ">=9.7.0,<10.0.0" },
     { name = "mkdocstrings", extras = ["python"], marker = "extra == 'docs'", specifier = ">=0.30.1,<0.31.0" },
-    { name = "pandas", specifier = ">=2.3.3" },
+    { name = "pandas", marker = "extra == 'examples'", specifier = ">=2.3.3" },
     { name = "papermill", marker = "extra == 'examples'", specifier = ">=2.6.0,<3.0.0" },
     { name = "pre-commit", marker = "extra == 'dev'", specifier = ">=4.3.0,<5.0.0" },
     { name = "torch", specifier = ">=2.1.0,<3.0.0" },
