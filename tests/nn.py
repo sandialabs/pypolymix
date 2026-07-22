@@ -46,61 +46,56 @@ model = StochasticModel(
 )
 print(f"Created stochastic model with {model.num_params()} parameters")
 
-# Training options
-lr = 1e-3             # Learning rate
-weight_decay = 1e-4   # Weight decay for AdamW
-weight_factor = 1e-2  # Weight factor for distribution loss
-num_epochs = 10000    # Number of epochs
-num_samples = 100     # Number of parameter samples per epoch
+def train_model(lr=1e-3, weight_decay=1e-4, weight_factor=1e-2, num_epochs=10_000, num_samples=100):
+    # Learnable global precision
+    log_tau = torch.nn.Parameter(torch.tensor(0.0))  # τ = exp(log_tau)
 
-# Learnable global precision
-log_tau = torch.nn.Parameter(torch.tensor(0.0))  # τ = exp(log_tau)
+    # Optimizer: AdamW
+    optimizer = torch.optim.AdamW(
+        list(model.parameters()) + [log_tau], lr=lr, weight_decay=weight_decay
+    )
 
-# Optimizer: AdamW
-optimizer = torch.optim.AdamW(
-    list(model.parameters()) + [log_tau], lr=lr, weight_decay=weight_decay
-)
+    # Loss
+    loss_fn = torch.nn.MSELoss(reduction="sum")
 
-# Loss
-loss_fn = torch.nn.MSELoss(reduction="sum")
+    # Scheduler: OneCycleLR
+    scheduler = torch.optim.lr_scheduler.OneCycleLR(
+        optimizer,
+        max_lr=10 * lr,
+        total_steps=num_epochs
+    )
 
-# Scheduler: OneCycleLR
-scheduler = torch.optim.lr_scheduler.OneCycleLR(
-    optimizer,
-    max_lr=10 * lr,
-    total_steps=num_epochs
-)
+    # Train the stochastic model
+    for epoch in range(num_epochs):
+        optimizer.zero_grad()
 
-# Train the stochastic model
-for epoch in range(num_epochs):
-    optimizer.zero_grad()
+        # Evaluate parameters and model
+        params = model.sample_parameters(num_samples=100)
+        Y_hat = surrogate_model(X, params)
 
-    # Evaluate parameters and model
-    params = model.sample_parameters(num_samples=100)
-    Y_hat = surrogate_model(X, params)
+        # Losses
+        data_loss = loss_fn(Y_hat, Y.unsqueeze(0).expand_as(Y_hat)) / num_samples
+        data_loss *= torch.exp(log_tau)
+        distribution_loss = model.distribution_loss()
+        total_loss = data_loss + weight_factor * distribution_loss
 
-    # Losses
-    data_loss = loss_fn(Y_hat, Y.unsqueeze(0).expand_as(Y_hat)) / num_samples
-    data_loss *= torch.exp(log_tau)
-    distribution_loss = model.distribution_loss()
-    total_loss = data_loss + weight_factor * distribution_loss
+        # Backprop + step
+        total_loss.backward()
+        optimizer.step()
+        scheduler.step()
 
-    # Backprop + step
-    total_loss.backward()
-    optimizer.step()
-    scheduler.step()
+        # Logging
+        if (epoch + 1) % 1000 == 0:
+            current_lr = scheduler.get_last_lr()[0]
+            print(
+                f"Epoch {epoch + 1:5d} | "
+                f"learning rate = {current_lr:.6f} | "
+                f"data loss = {data_loss.item():.4f} | "
+                f"distribution loss = {distribution_loss.item():.4f} | "
+                f"total loss = {total_loss.item():.4f}"
+            )
 
-    # Logging
-    if (epoch + 1) % 1000 == 0:
-        current_lr = scheduler.get_last_lr()[0]
-        print(
-            f"Epoch {epoch + 1:5d} | "
-            f"learning rate = {current_lr:.6f} | "
-            f"data loss = {data_loss.item():.4f} | "
-            f"distribution loss = {distribution_loss.item():.4f} | "
-            f"total loss = {total_loss.item():.4f}"
-        )
-
+train_model()
 
 # Evaluate the model
 model.eval()
