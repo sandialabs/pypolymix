@@ -12,13 +12,6 @@ y1 = torch.sin(torch.pi * X) + 0.05 * torch.randn(X.shape)
 y2 = torch.cos(torch.pi * X) + 0.05 * torch.randn(X.shape)
 Y = torch.hstack((y1, y2))
 
-_, axes = plt.subplots(1, 2, figsize=(8, 3))
-for j, (y, ax) in enumerate(zip(Y.T, axes.flatten())):
-    ax.scatter(X, y)
-    ax.set_xlabel("x")
-    ax.set_ylabel(f"y{j + 1}")
-plt.tight_layout()
-
 
 width = 16
 depth = 1
@@ -111,17 +104,3 @@ model.eval()
 with torch.no_grad():
     X_test = torch.linspace(-1, 1, 50).unsqueeze(1)
     Y_test = model(X_test, num_samples=1000)
-
-# For each output dimension we show the mean prediction and the central 90% credible interval obtained from the samples, plus the observed data for reference.
-
-# Plot prediction
-_, axes = plt.subplots(1, 2, figsize=(8, 3))
-for j, (y, ax) in enumerate(zip(Y.T, axes.flatten())):
-    x = X_test.squeeze(-1)
-    q = torch.quantile(Y_test[:, :, j], torch.tensor([0.05, 0.5, 0.95]), axis=0)
-    ax.fill_between(x, q[0], q[-1], color="red", alpha=0.5, linewidth=0)
-    ax.plot(x, q[1], color="red", linewidth=2)
-    ax.scatter(X, y, zorder=99)
-    ax.set_xlabel("x")
-    ax.set_ylabel(f"y{j + 1}")
-plt.tight_layout()
