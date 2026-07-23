@@ -26,7 +26,8 @@ surrogate_model = NeuralNetwork(num_inputs=1, num_outputs=2, width=width, depth=
 num_params = surrogate_model.num_params()
 print(f"This model has {num_params} parameters")
 
-
+# TODO the interface for creating parameter_groups requires manual math (width * width)
+# that could potentially be done programmatically
 parameter_groups = [  # Input layer
     DeterministicGroup("input_layer_weights", width),
     DeterministicGroup("input_layer_biases", width),
@@ -46,7 +47,9 @@ model = StochasticModel(
 )
 print(f"Created stochastic model with {model.num_params()} parameters")
 
-def train_model(lr=1e-3, weight_decay=1e-4, weight_factor=1e-2, num_epochs=10_000, num_samples=100):
+# num_epochs, num_samples, weight_factor and scheduler
+# will be the primary parameters tested
+def train_model(num_epochs=10_000, num_samples=100, weight_factor=1e-2, lr=1e-3, weight_decay=1e-4):
     # Learnable global precision
     log_tau = torch.nn.Parameter(torch.tensor(0.0))  # τ = exp(log_tau)
 
@@ -84,18 +87,24 @@ def train_model(lr=1e-3, weight_decay=1e-4, weight_factor=1e-2, num_epochs=10_00
         optimizer.step()
         scheduler.step()
 
-        # Logging
-        if (epoch + 1) % 1000 == 0:
-            current_lr = scheduler.get_last_lr()[0]
-            print(
-                f"Epoch {epoch + 1:5d} | "
-                f"learning rate = {current_lr:.6f} | "
-                f"data loss = {data_loss.item():.4f} | "
-                f"distribution loss = {distribution_loss.item():.4f} | "
-                f"total loss = {total_loss.item():.4f}"
-            )
+        # # Logging
+        # if (epoch + 1) % 1000 == 0:
+        #     current_lr = scheduler.get_last_lr()[0]
+        #     print(
+        #         f"Epoch {epoch + 1:5d} | "
+        #         f"learning rate = {current_lr:.6f} | "
+        #         f"data loss = {data_loss.item():.4f} | "
+        #         f"distribution loss = {distribution_loss.item():.4f} | "
+        #         f"total loss = {total_loss.item():.4f}"
+        #     )
+    return total_loss
 
-train_model()
+# TODO - modify this approach
+# The problem with using numbers like 100_000 is that the tests take 2 minutes to run
+# and tests should ideally be fast
+print("# Epochs\tTotal Loss")
+for num in [1_000, 10_000, 100_000]:
+    print(f"{num}\t{train_model(num_epochs=num)}")
 
 # Evaluate the model
 model.eval()
