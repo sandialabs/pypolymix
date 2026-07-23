@@ -93,9 +93,24 @@ def train_model(model, num_epochs=10_000, num_samples=100, weight_factor=1e-2, l
         #     )
     return total_loss
 
-# TODO - modify this approach
-# The problem with using numbers like 100_000 is that the tests take 2 minutes to run
-# and tests should ideally be fast
-print("# Epochs\tTotal Loss")
-for num in [1_000, 1000, 1000]:
-    print(f"{num}\t{train_model(copy.deepcopy(model), num_epochs=num)}")
+# Tests
+print("\nTests\n")
+print("Epochs\tTotal Loss") 
+for num in [1_000, 3_000, 10_000]:
+    total_loss = train_model(copy.deepcopy(model), num_epochs=num)
+    print(f"{num}\t{total_loss:.2f}")
+
+print()
+print("Samples\tTotal Loss")
+for num in [10, 30, 100]:
+    total_loss = train_model(copy.deepcopy(model), num_samples=num)
+    print(f"{num}\t{total_loss:.2f}")
+    
+print()
+print("weight_factor\tTotal Loss")
+# not really sure what to do for weight factor
+# since I don't know whether to expect high or low to perform better
+for num in [1e-1, 1e-2, 1e-3]:
+    total_loss = train_model(copy.deepcopy(model), weight_factor=num)
+    print(f"{num}\t\t{total_loss:.2f}")
+
