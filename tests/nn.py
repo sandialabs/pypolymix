@@ -1,9 +1,10 @@
-import matplotlib.pyplot as plt
 import torch
 
 from pypolymix.parameter_groups import IIDGaussianGroup, DeterministicGroup
 from pypolymix.surrogate_models import NeuralNetwork
 from pypolymix import StochasticModel
+import copy
+
 _ = torch.manual_seed(2048)
 
 num_samples = 30
@@ -42,7 +43,7 @@ print(f"Created stochastic model with {model.num_params()} parameters")
 
 # num_epochs, num_samples, weight_factor and scheduler
 # will be the primary parameters tested
-def train_model(num_epochs=10_000, num_samples=100, weight_factor=1e-2, lr=1e-3, weight_decay=1e-4):
+def train_model(model, num_epochs=10_000, num_samples=100, weight_factor=1e-2, lr=1e-3, weight_decay=1e-4):
     # Learnable global precision
     log_tau = torch.nn.Parameter(torch.tensor(0.0))  # τ = exp(log_tau)
 
@@ -81,7 +82,7 @@ def train_model(num_epochs=10_000, num_samples=100, weight_factor=1e-2, lr=1e-3,
         scheduler.step()
 
         # # Logging
-        # if (epoch + 1) % 1000 == 0:
+        # if (epoch + 1) % 100 == 0:
         #     current_lr = scheduler.get_last_lr()[0]
         #     print(
         #         f"Epoch {epoch + 1:5d} | "
@@ -96,11 +97,5 @@ def train_model(num_epochs=10_000, num_samples=100, weight_factor=1e-2, lr=1e-3,
 # The problem with using numbers like 100_000 is that the tests take 2 minutes to run
 # and tests should ideally be fast
 print("# Epochs\tTotal Loss")
-for num in [1_000, 10_000, 100_000]:
-    print(f"{num}\t{train_model(num_epochs=num)}")
-
-# Evaluate the model
-model.eval()
-with torch.no_grad():
-    X_test = torch.linspace(-1, 1, 50).unsqueeze(1)
-    Y_test = model(X_test, num_samples=1000)
+for num in [1_000, 1000, 1000]:
+    print(f"{num}\t{train_model(copy.deepcopy(model), num_epochs=num)}")
