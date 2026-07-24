@@ -5,45 +5,48 @@ from pypolymix.surrogate_models import NeuralNetwork
 from pypolymix import StochasticModel
 import copy
 
-_ = torch.manual_seed(2048)
+# setup NN and input data for all of the tests
+def make_problem():
+    _ = torch.manual_seed(2048)
+    num_samples = 30
+    X = 2 * torch.rand(num_samples, 1) - 1
+    y1 = torch.sin(torch.pi * X) + 0.05 * torch.randn(X.shape)
+    y2 = torch.cos(torch.pi * X) + 0.05 * torch.randn(X.shape)
+    Y = torch.hstack((y1, y2))
 
-num_samples = 30
-X = 2 * torch.rand(num_samples, 1) - 1
-y1 = torch.sin(torch.pi * X) + 0.05 * torch.randn(X.shape)
-y2 = torch.cos(torch.pi * X) + 0.05 * torch.randn(X.shape)
-Y = torch.hstack((y1, y2))
+    width = 16
+    depth = 1
+    surrogate_model = NeuralNetwork(num_inputs=1, num_outputs=2, width=width, depth=depth, activation=torch.nn.functional.tanh)
+    num_params = surrogate_model.num_params()
+    print(f"This model has {num_params} parameters")
 
-
-width = 16
-depth = 1
-surrogate_model = NeuralNetwork(num_inputs=1, num_outputs=2, width=width, depth=depth, activation=torch.nn.functional.tanh)
-num_params = surrogate_model.num_params()
-print(f"This model has {num_params} parameters")
-
-# TODO the interface for creating parameter_groups requires manual math (width * width)
-# that could potentially be done programmatically
-parameter_groups = [  # Input layer
-    DeterministicGroup("input_layer_weights", width),
-    DeterministicGroup("input_layer_biases", width),
-]
-for j in range(depth - 1):
-    parameter_groups += [  # Hidden layers
-        DeterministicGroup(f"layer{j + 1}_weights", width * width),
-        DeterministicGroup(f"layer{j + 1}_biases", width),
+    # TODO the interface for creating parameter_groups requires manual math (width * width)
+    # that could potentially be done programmatically
+    parameter_groups = [  # Input layer
+        DeterministicGroup("input_layer_weights", width),
+        DeterministicGroup("input_layer_biases", width),
     ]
-parameter_groups += [  # Output layer
-    IIDGaussianGroup("output_weights", 2 * width),
-    IIDGaussianGroup("output_biases", 2),
-]
+    for j in range(depth - 1):
+        parameter_groups += [  # Hidden layers
+            DeterministicGroup(f"layer{j + 1}_weights", width * width),
+            DeterministicGroup(f"layer{j + 1}_biases", width),
+        ]
+    parameter_groups += [  # Output layer
+        IIDGaussianGroup("output_weights", 2 * width),
+        IIDGaussianGroup("output_biases", 2),
+    ]
 
-model = StochasticModel(
-    surrogate_model=surrogate_model, parameter_groups=parameter_groups
-)
-print(f"Created stochastic model with {model.num_params()} parameters")
+    model = StochasticModel(
+        surrogate_model=surrogate_model, parameter_groups=parameter_groups
+    )
+    print(f"Created stochastic model with {model.num_params()} parameters")
+    return surrogate_model, model, X, Y
 
 # num_epochs, num_samples, weight_factor and scheduler
 # will be the primary parameters tested
-def train_model(model, num_epochs=10_000, num_samples=100, weight_factor=1e-2, lr=1e-3, weight_decay=1e-4):
+def train_model(surrogate_model, model, X, Y,
+                num_epochs=10_000, num_samples=100,
+                weight_factor=1e-2, lr=1e-3, weight_decay=1e-4):
     # Learnable global precision
     log_tau = torch.nn.Parameter(torch.tensor(0.0))  # τ = exp(log_tau)
 
@@ -91,18 +94,21 @@ def train_model(model, num_epochs=10_000, num_samples=100, weight_factor=1e-2, l
         #         f"distribution loss = {distribution_loss.item():.4f} | "
         #         f"total loss = {total_loss.item():.4f}"
         #     )
-    return total_loss
+    # total_loss is a tensor, return a float
+    return total_loss.item()
 
 # Tests
 print("\nTests\n")
 print("Epochs\tTotal Loss") 
 epoch_losses = []
 for num in [1_000, 3_000, 10_000]:
-    total_loss = train_model(copy.deepcopy(model), num_epochs=num)
+    surrogate_model, model, X, Y = make_problem()
+    total_loss = train_model(surrogate_model, model, X, Y, num_epochs=num)
     epoch_losses.append(total_loss)
     print(f"{num}\t{total_loss:.2f}")
 assert sorted(epoch_losses, reverse=True) == epoch_losses, "Failed: Model does not improve with more epoch losses"
 
+# TODO update these tests
 # TODO this test fails - figure out if it's a bug with my code
 # or if more samples isn't necessarily better
 print()
