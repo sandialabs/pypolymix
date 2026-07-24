@@ -67,7 +67,7 @@ def train_model(model, num_epochs=10_000, num_samples=100, weight_factor=1e-2, l
         optimizer.zero_grad()
 
         # Evaluate parameters and model
-        params = model.sample_parameters(num_samples=100)
+        params = model.sample_parameters(num_samples=num_samples)
         Y_hat = surrogate_model(X, params)
 
         # Losses
@@ -103,6 +103,8 @@ for num in [1_000, 3_000, 10_000]:
     print(f"{num}\t{total_loss:.2f}")
 assert sorted(epoch_losses, reverse=True) == epoch_losses, "Failed: Model does not improve with more epoch losses"
 
+# TODO this test fails - figure out if it's a bug with my code
+# or if more samples isn't necessarily better
 print()
 print("Samples\tTotal Loss")
 sample_loss = []
