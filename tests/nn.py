@@ -96,21 +96,30 @@ def train_model(model, num_epochs=10_000, num_samples=100, weight_factor=1e-2, l
 # Tests
 print("\nTests\n")
 print("Epochs\tTotal Loss") 
+epoch_losses = []
 for num in [1_000, 3_000, 10_000]:
     total_loss = train_model(copy.deepcopy(model), num_epochs=num)
+    epoch_losses.append(total_loss)
     print(f"{num}\t{total_loss:.2f}")
+assert sorted(epoch_losses, reverse=True) == epoch_losses, "Failed: Model does not improve with more epoch losses"
 
 print()
 print("Samples\tTotal Loss")
+sample_loss = []
 for num in [10, 30, 100]:
     total_loss = train_model(copy.deepcopy(model), num_samples=num)
+    sample_loss.append(total_loss)
     print(f"{num}\t{total_loss:.2f}")
+assert sorted(sample_loss, reverse=True) == sample_loss, "Failed: model does not improve with more samples"
     
 print()
 print("weight_factor\tTotal Loss")
-# not really sure what to do for weight factor
-# since I don't know whether to expect high or low to perform better
+# Lower weight factor results in less total loss
+# because it is multiplied by distribution loss
+# not sure if this assertion is meaningful
+weight_factor_loss = []
 for num in [1e-1, 1e-2, 1e-3]:
     total_loss = train_model(copy.deepcopy(model), weight_factor=num)
+    weight_factor_loss.append(total_loss)
     print(f"{num}\t\t{total_loss:.2f}")
-
+assert sorted(weight_factor_loss, reverse=True) == weight_factor_loss, "Model does not improve with decreased weight factor"
