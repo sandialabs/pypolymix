@@ -105,19 +105,17 @@ def test_epochs():
         epoch_losses.append(total_loss)
     assert sorted(epoch_losses, reverse=True) == epoch_losses, "Failed: Model does not improve with more epoch losses"
 
+# TODO figure out if more samples isn't necessarily better
+# or if this fails due to a bug in code
+def test_num_samples():
+    sample_loss = []
+    for num in [10, 30, 100]:
+        surrogate_model, model, X, Y = make_problem()
+        total_loss = train_model(surrogate_model, model, X, Y, num_samples=num)
+        sample_loss.append(total_loss)
+    assert sorted(sample_loss, reverse=True) == sample_loss, "Failed: Model does not improve with more samples"
+
 '''
-# TODO update these tests
-# TODO this test fails - figure out if it's a bug with my code
-# or if more samples isn't necessarily better
-print()
-print("Samples\tTotal Loss")
-sample_loss = []
-for num in [10, 30, 100]:
-    total_loss = train_model(copy.deepcopy(model), num_samples=num)
-    sample_loss.append(total_loss)
-    print(f"{num}\t{total_loss:.2f}")
-assert sorted(sample_loss, reverse=True) == sample_loss, "Failed: model does not improve with more samples"
-    
 print()
 print("weight_factor\tTotal Loss")
 # Lower weight factor results in less total loss
