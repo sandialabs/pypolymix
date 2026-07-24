@@ -115,16 +115,12 @@ def test_num_samples():
         sample_loss.append(total_loss)
     assert sorted(sample_loss, reverse=True) == sample_loss, "Failed: Model does not improve with more samples"
 
-'''
-print()
-print("weight_factor\tTotal Loss")
-# Lower weight factor results in less total loss
-# because it is multiplied by distribution loss
-# not sure if this assertion is meaningful
-weight_factor_loss = []
-for num in [1e-1, 1e-2, 1e-3]:
-    total_loss = train_model(copy.deepcopy(model), weight_factor=num)
-    weight_factor_loss.append(total_loss)
-    print(f"{num}\t\t{total_loss:.2f}")
-assert sorted(weight_factor_loss, reverse=True) == weight_factor_loss, "Model does not improve with decreased weight factor"
-'''
+# Higher weight factor results in more total loss
+# because total_loss = data_loss + weight_factor * distribution loss
+def test_weight_factor():
+    loss = []
+    for num in [1e-1, 1e-2, 1e-3]:
+        surrogate_model, model, X, Y = make_problem()
+        total_loss = train_model(surrogate_model, model, X, Y, weight_factor=num)
+        loss.append(total_loss) 
+    assert sorted(loss, reverse=True) == loss, "Failed: Higher weight factor does not result in more total loss"
