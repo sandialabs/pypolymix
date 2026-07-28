@@ -1,9 +1,9 @@
+# TODO - warning about not having numpy installed
 import torch
 
 from pypolymix.parameter_groups import IIDGaussianGroup, DeterministicGroup
 from pypolymix.surrogate_models import NeuralNetwork
 from pypolymix import StochasticModel
-import copy
 
 # setup NN and input data for all of the tests
 def make_problem():
@@ -103,7 +103,7 @@ def test_epochs():
         surrogate_model, model, X, Y = make_problem()
         total_loss = train_model(surrogate_model, model, X, Y, num_epochs=num)
         epoch_losses.append(total_loss)
-    assert sorted(epoch_losses, reverse=True) == epoch_losses, "Failed: Model does not improve with more epoch losses"
+    assert sorted(epoch_losses, reverse=True) == epoch_losses, "Failed: Model does not improve with more epochs"
 
 # TODO figure out if more samples isn't necessarily better
 # or if this fails due to a bug in code
@@ -114,7 +114,6 @@ def test_num_samples():
         total_loss = train_model(surrogate_model, model, X, Y, num_samples=num)
         sample_loss.append(total_loss)
     assert sorted(sample_loss, reverse=True) == sample_loss, "Failed: Model does not improve with more samples"
-
 # Higher weight factor results in more total loss
 # because total_loss = data_loss + weight_factor * distribution loss
 def test_weight_factor():
