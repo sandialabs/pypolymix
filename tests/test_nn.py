@@ -35,7 +35,8 @@ def make_problem():
         IIDGaussianGroup("output_weights", 2 * width),
         IIDGaussianGroup("output_biases", 2),
     ]
-
+    # surrogate_model: The neural network function
+    # model: the network's stochastic manager of weights and biases
     model = StochasticModel(
         surrogate_model=surrogate_model, parameter_groups=parameter_groups
     )
@@ -46,8 +47,6 @@ def make_problem():
 # because this training loop uses log_tau
 # num_epochs, num_samples, weight_factor and scheduler
 # will be the primary parameters tested
-# TODO vary weight factor, so it goes all the way to 1 (or even more)
-# Determinstic training first, then add randomness
 def train_model(surrogate_model, model, X, Y,
                 num_epochs=10_000, num_samples=100,
                 weight_factor=1e-2, lr=1e-3, weight_decay=1e-4):
@@ -129,8 +128,9 @@ def test_num_samples():
 # because total_loss = data_loss + weight_factor * distribution loss
 def test_weight_factor():
     loss = {}
-    for num in [0.1, 0.01, 0.001]:
+    for num in [1, 0.1, 0.01, 0.001]:
         surrogate_model, model, X, Y = make_problem()
         loss[num] = train_model(surrogate_model, model, X, Y, weight_factor=num)
+    assert is_better(loss[0.1], loss[1])
     assert is_better(loss[0.01], loss[0.1])
     assert is_better(loss[0.001], loss[0.01])

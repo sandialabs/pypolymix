@@ -55,15 +55,9 @@ def make_problem():
 # num_epochs, num_samples, weight_factor and scheduler
 # will be the primary parameters tested
 # TODO experiment with a different scheduler
-# TODO log_tau is defined in moe.ipynb but not used - ask what that means
-# TODO besides not using log_tau, this code is the same as nn.py's train model
-# So this function could potentially be used for testing all NN based models
 def train_model(surrogate_model, model, X, Y,
                 num_epochs=10_000, num_samples=100,
                 weight_factor=1e-2, lr=1e-3, weight_decay=1e-4):
-    # Learnable global precision
-    log_tau = torch.nn.Parameter(torch.tensor(0.0))  # τ = exp(log_tau)
-
     # Optimizer: AdamW
     optimizer = torch.optim.AdamW(model.parameters(), lr=lr, weight_decay=weight_decay)
 
@@ -136,8 +130,9 @@ def test_num_samples():
 # because total_loss = data_loss + weight_factor * distribution loss
 def test_weight_factor():
     loss = {}
-    for num in [0.1, 0.01, 0.001]:
+    for num in [1, 0.1, 0.01, 0.001]:
         surrogate_model, model, X, Y = make_problem()
         loss[num] = train_model(surrogate_model, model, X, Y, weight_factor=num)
+    assert is_better(loss[0.1], loss[1])
     assert is_better(loss[0.01], loss[0.1])
     assert is_better(loss[0.001], loss[0.01])
