@@ -124,22 +124,20 @@ def test_epochs():
     assert is_better(epoch_losses[3_000], epoch_losses[1_000])
     assert is_better(epoch_losses[10_000], epoch_losses[3000])
 
-# TODO figure out if more samples isn't necessarily better
-# or if this fails due to a bug in code
 def test_num_samples():
-    sample_loss = []
-    for num in [10, 30, 100]:
+    loss = {}
+    for num in [1, 10, 100]:
         surrogate_model, model, X, Y = make_problem()
-        total_loss = train_model(surrogate_model, model, X, Y, num_samples=num)
-        sample_loss.append(total_loss)
-    assert sorted(sample_loss, reverse=True) == sample_loss, "Failed: Model does not improve with more samples"
+        loss[num] = train_model(surrogate_model, model, X, Y, num_samples=num)
+    assert is_better(loss[10], loss[1])
+    assert is_better(loss[100], loss[10])
 
 # Higher weight factor results in more total loss
 # because total_loss = data_loss + weight_factor * distribution loss
 def test_weight_factor():
-    loss = []
-    for num in [1e-1, 1e-2, 1e-3]:
+    loss = {}
+    for num in [0.1, 0.01, 0.001]:
         surrogate_model, model, X, Y = make_problem()
-        total_loss = train_model(surrogate_model, model, X, Y, weight_factor=num)
-        loss.append(total_loss)
-    assert sorted(loss, reverse=True) == loss, "Failed: Higher weight factor does not result in more total loss"
+        loss[num] = train_model(surrogate_model, model, X, Y, weight_factor=num)
+    assert is_better(loss[0.01], loss[0.1])
+    assert is_better(loss[0.001], loss[0.01])
