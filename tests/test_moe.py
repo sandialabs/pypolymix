@@ -109,6 +109,12 @@ def is_better(expected_better, expected_worse):
     '''
     return expected_better < expected_worse + 10
 
+def test_returns_float():
+    surrogate_model, model, X, Y = make_problem()
+    total_loss = train_model(surrogate_model, model, X, Y,
+                             num_epochs=10, num_samples=2)
+    assert isinstance(total_loss, float)
+
 def test_epochs():
     epoch_losses = {}
     for num in [1_000, 3_000, 10_000]:
