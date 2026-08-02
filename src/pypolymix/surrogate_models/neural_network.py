@@ -30,6 +30,9 @@ class NeuralNetwork(SurrogateModel):
         width: int = 16,
         depth: int = 1,
         activation: Callable = F.relu,
+        batch_norm: bool = False,
+        batch_norm_eps: float = 1e-5,
+        batch_norm_momentum: float = 0.1,
     ):
         """Initialize the neural network architecture.
 
@@ -39,6 +42,11 @@ class NeuralNetwork(SurrogateModel):
             width: Hidden-layer width.
             depth: Number of hidden layers.
             activation: Callable applied after each hidden linear block.
+            batch_norm: Whether to apply batch normalization after hidden linear
+                blocks and before activation.
+            batch_norm_eps: Small positive value added to hidden batch variances.
+            batch_norm_momentum: Momentum used to update running batch-normalization
+                statistics during training.
         """
         super().__init__()
         self.num_inputs = num_inputs
@@ -46,13 +54,23 @@ class NeuralNetwork(SurrogateModel):
         self.width = width
         self.depth = depth
         self.activation = activation
+        self.batch_norm = batch_norm
+        self.batch_norm_eps = batch_norm_eps
+        self.batch_norm_momentum = batch_norm_momentum
 
-        # Define layer shapes (weights and biases)
+        if batch_norm:
+            self.register_buffer("batch_norm_running_mean", torch.zeros(depth, width))
+            self.register_buffer("batch_norm_running_var", torch.ones(depth, width))
+
+        # Define layer shapes. Batch norm applies to hidden layers only.
         self.layer_shapes = []
         in_features = num_inputs
         for _ in range(depth):
             self.layer_shapes.append((in_features, width))  # weight
             self.layer_shapes.append((width,))  # bias
+            if batch_norm:
+                self.layer_shapes.append((width,))  # batch-norm gamma
+                self.layer_shapes.append((width,))  # batch-norm beta
             in_features = width
 
         # Output layer
@@ -74,6 +92,47 @@ class NeuralNetwork(SurrogateModel):
         """Return the number of scalar parameters implied by the architecture."""
         return self._num_params
 
+    def _batch_norm(self, y: torch.Tensor, layer_idx: int) -> torch.Tensor:
+        """Apply hidden-layer batch normalization with running statistics."""
+        running_mean = self.batch_norm_running_mean[layer_idx].to(
+            device=y.device, dtype=y.dtype
+        )
+        running_var = self.batch_norm_running_var[layer_idx].to(device=y.device, dtype=y.dtype)
+
+        if self.training:
+            batch_mean = y.mean(dim=(0, 1), keepdim=True)
+            batch_var = y.var(dim=(0, 1), unbiased=False, keepdim=True)
+
+            with torch.no_grad():
+                n = y.shape[0] * y.shape[1]
+                if n > 1:
+                    running_batch_var = y.var(dim=(0, 1), unbiased=True)
+                else:
+                    running_batch_var = batch_var.reshape(-1)
+
+                mean_update = batch_mean.reshape(-1).detach().to(
+                    device=self.batch_norm_running_mean.device,
+                    dtype=self.batch_norm_running_mean.dtype,
+                )
+                var_update = running_batch_var.detach().to(
+                    device=self.batch_norm_running_var.device,
+                    dtype=self.batch_norm_running_var.dtype,
+                )
+                self.batch_norm_running_mean[layer_idx].mul_(1 - self.batch_norm_momentum).add_(
+                    self.batch_norm_momentum * mean_update
+                )
+                self.batch_norm_running_var[layer_idx].mul_(1 - self.batch_norm_momentum).add_(
+                    self.batch_norm_momentum * var_update
+                )
+
+            mean = batch_mean
+            var = batch_var
+        else:
+            mean = running_mean.reshape(1, 1, -1)
+            var = running_var.reshape(1, 1, -1)
+
+        return (y - mean) * torch.rsqrt(var + self.batch_norm_eps)
+
     def forward(self, x: torch.Tensor, params: torch.Tensor) -> torch.Tensor:
         """Evaluate the neural network for multiple parameter samples in parallel.
 
@@ -90,9 +149,11 @@ class NeuralNetwork(SurrogateModel):
         # Expand inputs for broadcasting: (num_samples, batch_size, num_inputs)
         y = x.unsqueeze(0).expand(num_samples, -1, -1)
 
-        # Loop over layers, but vectorized across samples
-        for j in range(0, len(self.param_slices), 2):
-            w_slice, b_slice = self.param_slices[j], self.param_slices[j + 1]
+        slice_idx = 0
+        for layer_idx in range(self.depth + 1):
+            w_slice = self.param_slices[slice_idx]
+            b_slice = self.param_slices[slice_idx + 1]
+            slice_idx += 2
 
             # Extract weights/biases for all samples
             w = params[:, w_slice[0] : w_slice[1]].reshape(
@@ -105,8 +166,23 @@ class NeuralNetwork(SurrogateModel):
             # Batched linear transformation: (num_samples, batch, out_features)
             y = torch.einsum("tbi,tio->tbo", y, w) + b.unsqueeze(1)
 
-            # Apply activation except on last layer
-            if j < len(self.param_slices) - 2:
+            # Apply batch normalization and activation except on last layer.
+            if layer_idx < self.depth:
+                if self.batch_norm:
+                    gamma_slice = self.param_slices[slice_idx]
+                    beta_slice = self.param_slices[slice_idx + 1]
+                    slice_idx += 2
+
+                    gamma = params[:, gamma_slice[0] : gamma_slice[1]].reshape(
+                        num_samples, *gamma_slice[2]
+                    )
+                    beta = params[:, beta_slice[0] : beta_slice[1]].reshape(
+                        num_samples, *beta_slice[2]
+                    )
+
+                    y = self._batch_norm(y, layer_idx)
+                    y = y * gamma.unsqueeze(1) + beta.unsqueeze(1)
+
                 y = self.activation(y)
 
         return y
