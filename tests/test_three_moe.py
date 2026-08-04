@@ -70,7 +70,6 @@ def make_three_expert_problem():
         gating_network=gating_network,
     )
 
-    parameter_groups = []
     # Expert parameters
     # each expert has four parameters: 2 stochastic and 2 deterministic
     parameter_groups = [
@@ -90,7 +89,7 @@ def make_three_expert_problem():
     ]
     # no hidden -> hidden weights and biases since there's only 1 layer
 
-    # Gating network output layer: map the 16 output values to 3 hidden weights
+    # Gating network output layer: map the 16 hidden nodes to 3 expert weights
     parameter_groups += [
         IIDGaussianGroup("gating_output_weights", NUM_EXPERTS * width),
         IIDGaussianGroup("gating_output_biases", NUM_EXPERTS),
@@ -143,7 +142,7 @@ def train_model(surrogate_model, model, X, Y,
 
 def gating_weights(surrogate_model, model, X_eval, num_param_samples=200):
     ''' For each evaluation point, how much does the gating network use each expert?
-    Returned: len(X_eval) * 3 vector. The 3 vector represents weights for each expert
+    Returned: Tensor of shape (len(X_eval), NUM_EXPERTS).
     '''
     
     with torch.no_grad():
