@@ -154,7 +154,6 @@ def gating_weights(surrogate_model, model, X_eval, num_param_samples=200):
         gating_params = params[:, num_expert_params:]
 
         gates = surrogate_model.gating_network(X_eval, gating_params)
-        print(gates)
         mean_gates = gates.mean(dim=0)
     return mean_gates
 
@@ -205,7 +204,6 @@ def test_experts_specialize_by_region():
     surrogate_model, model, X, Y, region, edges = make_three_expert_problem()
     train_model(surrogate_model, model, X, Y)
 
-    # Evaluate gating on a dense, ordered grid.
     X_grid = torch.linspace(-1.0, 1.0, 600).unsqueeze(-1)
 
     grid_region = torch.bucketize(
@@ -220,4 +218,11 @@ def test_experts_specialize_by_region():
         [mean_gates[grid_region == r].mean(dim=0) for r in range(NUM_EXPERTS)]
     )
     
-    
+    dominant_expert_by_region = region_gate_means.argmax(dim=1)
+    # Check that each expert is dominant in one region
+    assert set(dominant_expert_by_region.tolist()) == {0, 1, 2}
+
+    # Quantify that dominance isn't just an even split
+    dominant_weights = region_gate_means.max(dim=1).values
+    print(f"Dominant weights\n{dominant_weights}")
+    assert torch.all(dominant_weights > 0.50)
