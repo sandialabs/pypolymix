@@ -185,3 +185,11 @@ def test_epochs():
     print(epoch_losses)
     assert is_better(epoch_losses[3_000], epoch_losses[1_000])
     assert is_better(epoch_losses[10_000], epoch_losses[3000])
+
+def test_num_samples():
+    loss = {}
+    for num in [1, 10, 100]:
+        surrogate_model, model, X, Y, region, edges = make_three_expert_problem()
+        loss[num] = train_model(surrogate_model, model, X, Y, num_samples=num)
+    assert is_better(loss[10], loss[1])
+    assert is_better(loss[100], loss[10])
