@@ -141,6 +141,23 @@ def train_model(surrogate_model, model, X, Y,
             # )
     return total_loss.item()
 
+def gating_weights(surrogate_model, model, X_eval, num_param_samples=200):
+    ''' For each evaluation point, how much does the gating network use each expert?
+    Returned: len(X_eval) * 3 vector. The 3 vector represents weights for each expert
+    '''
+    
+    with torch.no_grad():
+        params = model.sample_parameters(num_samples=num_param_samples)
+
+        # Parameter group slicing to skip expert parameters
+        num_expert_params = NUM_EXPERTS * 4
+        gating_params = params[:, num_expert_params:]
+
+        gates = surrogate_model.gating_network(X_eval, gating_params)
+        print(gates)
+        mean_gates = gates.mean(dim=0)
+    return mean_gates
+
 def test_three_region_data_generation():
     X, Y, region, edges = make_three_region_data()
 
@@ -183,3 +200,24 @@ def test_num_samples():
         loss[num] = train_model(surrogate_model, model, X, Y, num_samples=num)
     assert is_better(loss[10], loss[1])
     assert is_better(loss[100], loss[10])
+
+def test_experts_specialize_by_region():
+    surrogate_model, model, X, Y, region, edges = make_three_expert_problem()
+    train_model(surrogate_model, model, X, Y)
+
+    # Evaluate gating on a dense, ordered grid.
+    X_grid = torch.linspace(-1.0, 1.0, 600).unsqueeze(-1)
+
+    grid_region = torch.bucketize(
+        X_grid.squeeze(-1),
+        edges[1:-1],
+    )
+
+    mean_gates = gating_weights(surrogate_model, model, X_grid)
+
+    # Average gate vector in each of the three regions.
+    region_gate_means = torch.stack(
+        [mean_gates[grid_region == r].mean(dim=0) for r in range(NUM_EXPERTS)]
+    )
+    
+    
