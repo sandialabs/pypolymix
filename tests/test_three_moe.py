@@ -1,4 +1,3 @@
-import matplotlib.pyplot as plt
 import torch
 from pypolymix.parameter_groups import DeterministicGroup, IIDGaussianGroup
 from pypolymix.surrogate_models import PolynomialChaosExpansion, MixtureOfExperts, GatingNetwork
@@ -53,15 +52,6 @@ def make_three_region_data():
         + noise_std * torch.randn(num_training_points)
     ).unsqueeze(-1)
     return X, Y, region, edges
-
-
-X, Y, region, edges = make_three_region_data()
-# Plot synthetic data
-_, ax = plt.subplots()
-ax.scatter(X, Y)
-ax.set_xlabel("x")
-ax.set_ylabel("y")
-plt.tight_layout()
 
 def make_three_expert_problem():
     torch.manual_seed(1)
