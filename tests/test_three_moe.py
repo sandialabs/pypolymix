@@ -124,6 +124,7 @@ def train_model(surrogate_model, model, X, Y,
         total_steps=num_epochs,
     )
 
+    # print(f"Training for {num_epochs} epochs")
     for epoch in range(num_epochs):
         optimizer.zero_grad()
 
@@ -141,13 +142,13 @@ def train_model(surrogate_model, model, X, Y,
         # Logging
         if (epoch + 1) % 1000 == 0:
             current_lr = scheduler.get_last_lr()[0]
-            print(
-                f"Epoch {epoch + 1:5d} | "
-                f"learning rate = {current_lr:.6f} | "
-                f"data loss = {data_loss.item():.4f} | "
-                f"distribution loss = {distribution_loss.item():.4f} | "
-                f"total loss = {total_loss.item():.4f}"
-            )
+            # print(
+            #     f"Epoch {epoch + 1:5d} | "
+            #     f"learning rate = {current_lr:.6f} | "
+            #     f"data loss = {data_loss.item():.4f} | "
+            #     f"distribution loss = {distribution_loss.item():.4f} | "
+            #     f"total loss = {total_loss.item():.4f}"
+            # )
     return total_loss.item()
 
 def test_three_region_data_generation():
@@ -162,8 +163,25 @@ def test_three_region_data_generation():
 
 def test_three_expert_training_returns_float():
     surrogate_model, model, X, Y, region, edges = make_three_expert_problem()
-
     total_loss = train_model(surrogate_model,model, X, Y, num_epochs=10, num_samples=2)
 
     assert isinstance(total_loss, float)
     assert torch.isfinite(torch.tensor(total_loss))
+
+def is_better(expected_better, expected_worse):
+    '''
+    Check that expected_better is not too much more than expected_worse
+    Ideally it would be less over multiple samples
+    But the tests are already long-running, so for now close is good enough
+    '''
+    return expected_better < expected_worse + 10
+
+def test_epochs():
+    epoch_losses = {}
+    for num in [1_000, 3_000, 10_000]:
+        surrogate_model, model, X, Y, region, edges = make_three_expert_problem()
+        total_loss = train_model(surrogate_model, model, X, Y, num_epochs=num)
+        epoch_losses[num] = total_loss
+    print(epoch_losses)
+    assert is_better(epoch_losses[3_000], epoch_losses[1_000])
+    assert is_better(epoch_losses[10_000], epoch_losses[3000])
