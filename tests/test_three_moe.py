@@ -129,8 +129,8 @@ def train_model(surrogate_model, model, X, Y,
         scheduler.step()
 
         # Logging
-        if (epoch + 1) % 1000 == 0:
-            current_lr = scheduler.get_last_lr()[0]
+        # if (epoch + 1) % 1000 == 0:
+        #     current_lr = scheduler.get_last_lr()[0]
             # print(
             #     f"Epoch {epoch + 1:5d} | "
             #     f"learning rate = {current_lr:.6f} | "
