@@ -2,6 +2,8 @@ import torch
 from pypolymix.parameter_groups import DeterministicGroup, IIDGaussianGroup
 from pypolymix.surrogate_models import PolynomialChaosExpansion, MixtureOfExperts, GatingNetwork
 from pypolymix import StochasticModel
+from .train_moe import train_moe_model
+
 NUM_EXPERTS = 3
 
 def make_three_region_data():
@@ -99,47 +101,6 @@ def make_three_expert_problem():
 
     return surrogate_model, model, X, Y, region, edges
 
-
-def train_model(surrogate_model, model, X, Y,
-                num_epochs=10_000, num_samples=100,
-                weight_factor=1e-2, lr=1e-3, weight_decay=1e-4):
-    optimizer = torch.optim.AdamW(model.parameters(), lr=lr, weight_decay=weight_decay)
-
-    loss_fn = torch.nn.MSELoss(reduction="sum")
-
-    scheduler = torch.optim.lr_scheduler.OneCycleLR(
-        optimizer,
-        max_lr=10 * lr,
-        total_steps=num_epochs,
-    )
-
-    # print(f"Training for {num_epochs} epochs")
-    for epoch in range(num_epochs):
-        optimizer.zero_grad()
-
-        params = model.sample_parameters(num_samples=num_samples)
-        Y_hat = surrogate_model(X, params)
-
-        data_loss = loss_fn(Y_hat, Y.unsqueeze(0).expand_as(Y_hat)) / num_samples
-        distribution_loss = model.distribution_loss()
-        total_loss = data_loss + weight_factor * distribution_loss
-
-        total_loss.backward()
-        optimizer.step()
-        scheduler.step()
-
-        # Logging
-        # if (epoch + 1) % 1000 == 0:
-        #     current_lr = scheduler.get_last_lr()[0]
-            # print(
-            #     f"Epoch {epoch + 1:5d} | "
-            #     f"learning rate = {current_lr:.6f} | "
-            #     f"data loss = {data_loss.item():.4f} | "
-            #     f"distribution loss = {distribution_loss.item():.4f} | "
-            #     f"total loss = {total_loss.item():.4f}"
-            # )
-    return total_loss.item()
-
 def gating_weights(surrogate_model, model, X_eval, num_param_samples=200):
     ''' For each evaluation point, how much does the gating network use each expert?
     Returned: Tensor of shape (len(X_eval), NUM_EXPERTS).
@@ -168,7 +129,7 @@ def test_three_region_data_generation():
 
 def test_three_expert_training_returns_float():
     surrogate_model, model, X, Y, region, edges = make_three_expert_problem()
-    total_loss = train_model(surrogate_model,model, X, Y, num_epochs=10, num_samples=2)
+    total_loss = train_moe_model(surrogate_model,model, X, Y, num_epochs=10, num_samples=2)
 
     assert isinstance(total_loss, float)
     assert torch.isfinite(torch.tensor(total_loss))
@@ -185,7 +146,7 @@ def test_epochs():
     epoch_losses = {}
     for num in [1_000, 3_000, 10_000]:
         surrogate_model, model, X, Y, region, edges = make_three_expert_problem()
-        total_loss = train_model(surrogate_model, model, X, Y, num_epochs=num)
+        total_loss = train_moe_model(surrogate_model, model, X, Y, num_epochs=num)
         epoch_losses[num] = total_loss
     print(epoch_losses)
     assert is_better(epoch_losses[3_000], epoch_losses[1_000])
@@ -195,13 +156,13 @@ def test_num_samples():
     loss = {}
     for num in [1, 10, 100]:
         surrogate_model, model, X, Y, region, edges = make_three_expert_problem()
-        loss[num] = train_model(surrogate_model, model, X, Y, num_samples=num)
+        loss[num] = train_moe_model(surrogate_model, model, X, Y, num_samples=num)
     assert is_better(loss[10], loss[1])
     assert is_better(loss[100], loss[10])
 
 def test_experts_specialize_by_region():
     surrogate_model, model, X, Y, region, edges = make_three_expert_problem()
-    train_model(surrogate_model, model, X, Y)
+    train_moe_model(surrogate_model, model, X, Y)
 
     X_grid = torch.linspace(-1.0, 1.0, 600).unsqueeze(-1)
 
