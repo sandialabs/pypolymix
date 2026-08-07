@@ -2,7 +2,7 @@ import torch
 from pypolymix.parameter_groups import DeterministicGroup, IIDGaussianGroup
 from pypolymix.surrogate_models import PolynomialChaosExpansion, MixtureOfExperts, GatingNetwork
 from pypolymix import StochasticModel
-from .train_moe import train_moe_model
+from train_moe import train_moe_model
 
 NUM_EXPERTS = 3
 
