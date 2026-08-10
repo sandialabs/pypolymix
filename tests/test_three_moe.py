@@ -1,4 +1,5 @@
 import torch
+# package import used because in CI pytest is run from the project root
 from .train_moe import train_moe_model
 from .three_moe_helpers import make_three_region_data, make_three_expert_problem, gating_weights
 NUM_EXPERTS=3
