@@ -21,6 +21,7 @@ def test_minimal_distribution_returns_td():
     '''
     Currently this test fails.
     TODO: give distribution parameters device and dtype default values
+    Also do this for Gaussian and Laplace and Abstract Base Class
     '''
     gaussian_prior = IIDGaussianPrior()
     dist = gaussian_prior.distribution(event_shape=torch.Size([1]))

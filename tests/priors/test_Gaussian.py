@@ -4,6 +4,11 @@ import pytest
 from pypolymix.priors.base import Prior
 from pypolymix.priors.common import GaussianPrior
 
+def test_inherits_from_prior():
+    mean, cov = torch.zeros(2), torch.eye(2)
+    prior = GaussianPrior(mean=mean, covariance_matrix=cov)
+    assert isinstance(prior, Prior)
+
 def test_errors_without_covariance_representation():
     with pytest.raises(ValueError):
         GaussianPrior(mean=torch.zeros(2))
@@ -14,11 +19,6 @@ def test_errors_with_multiple_representations():
     mean = torch.zeros(2)
     with pytest.raises(ValueError, match="exactly one"):
         GaussianPrior(mean=mean, covariance_matrix=cov, scale_tril=scale_tril)
-
-def test_inherits_from_prior():
-    mean, cov = torch.zeros(2), torch.eye(2)
-    prior = GaussianPrior(mean=mean, covariance_matrix=cov)
-    assert isinstance(prior, Prior)
 
 def test_good_shape_cov_return_multivariate_normal():
     mean = torch.zeros(2)
