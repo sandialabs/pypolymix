@@ -2,9 +2,9 @@
   <img src="https://raw.githubusercontent.com/sandialabs/pypolymix/main/docs/img/logo.png" alt="pypolymix logo" width="160">
 </p>
 
-| Docs | Code style |
-|:----:|:----------:|
-| [![Docs](https://img.shields.io/badge/docs-online-blue)](https://sandialabs.github.io/pypolymix) | [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black) |
+| Docs | Code style | Coverage |
+|:----:|:----------:|:--------:|
+| [![Docs](https://img.shields.io/badge/docs-online-blue)](https://sandialabs.github.io/pypolymix) | [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black) | [![Coverage Status](https://coveralls.io/repos/github/sandialabs/pypolymix/badge.svg?branch=test-training-options)](https://coveralls.io/github/sandialabs/pypolymix?branch=test-training-options) |
 
 # Pypolymix
 

@@ -9,6 +9,9 @@ on:
   pull_request:
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   # run all tests
   test:
@@ -39,5 +42,18 @@ jobs:
           uv sync --python ${{ matrix.python-version }} --extra dev --locked
 
       - name: Run tests
+        if: matrix.python-version != '3.12'
         run: |
           uv run pytest tests/
+
+      - name: Run tests with coverage
+        if: matrix.python-version == '3.12'
+        run: |
+          uv run pytest tests/ --cov=src --cov-report=term-missing --cov-report=lcov:coverage.lcov
+
+      - name: Upload coverage to Coveralls
+        if: matrix.python-version == '3.12'
+        uses: coverallsapp/github-action@v2
+        with:
+          repo-token: ${{ secrets.COVERALLS_REPO_TOKEN }}
+          file: coverage.lcov
