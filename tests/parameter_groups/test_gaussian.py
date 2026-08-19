@@ -2,7 +2,7 @@ import pytest
 import torch
 import torch.distributions as td
 
-from pypolymix.parameter_groups import IIDGaussianGroup, ParameterGroup
+from pypolymix.parameter_groups import IIDGaussianGroup, ParameterGroup, GaussianGroup
 
 # IID Gaussian Group
 @pytest.fixture
@@ -33,3 +33,19 @@ def test_inherits_parameter_group_distribution_loss(iid_gaussian_group):
     '''IIDGaussianGroup doesn't implement distribution_loss, but it inherits'''
     distribution_loss = iid_gaussian_group.distribution_loss()
     assert isinstance(distribution_loss, torch.Tensor)
+
+# GaussianGroup
+@pytest.fixture
+def gaussian_group():
+    return GaussianGroup(name="test_name", num_params=3)
+
+def test_inherits_from_parameter_group(gaussian_group):
+    assert isinstance(gaussian_group, ParameterGroup)
+
+def test_variational_distribution_returns_distribution(gaussian_group):
+    distribution = gaussian_group.variational_distribution()
+    assert isinstance(distribution, td.Distribution)
+
+def test_sample_parameters_returns_Tensor(gaussian_group):
+    samples = gaussian_group.sample_parameters(5)
+    assert samples.shape == torch.Size([5, 3])
