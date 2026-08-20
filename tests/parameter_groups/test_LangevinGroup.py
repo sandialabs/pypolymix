@@ -9,7 +9,6 @@ def nn():
 
 @pytest.fixture
 def langevin_group():
-    neural_network = nn()
     return LangevinGroup(name='test name', num_params=NUM_PARAMS, score_model=nn())
 
 def test_inherits_ParameterGroup(langevin_group):
@@ -26,6 +25,16 @@ def test_sample_parameters_returns_Tensor(langevin_group):
 def test_sample_parameters_shape(langevin_group):
     parameters = langevin_group.sample_parameters(num_samples=8)
     assert parameters.size() == torch.Size([8, 3])
+
+def test_sample_parameters_shape_energy_model():
+    energy_model = NeuralNetwork(num_inputs=1, num_outputs=1, width=4, depth=1)  
+    energy_group = LangevinGroup(name='test name', num_params=1, energy_model=energy_model)
+    parameters = energy_group.sample_parameters(num_samples=8)
+    assert parameters.size() == torch.Size([8, 1])
+
+def test_sample_negative_parameters_ValueError(langevin_group):
+    with pytest.raises(ValueError):
+        langevin_group.sample_parameters(num_samples=-1)
 
 def test_variational_distribution_runtime_error(langevin_group):
     with pytest.raises(RuntimeError):
@@ -63,3 +72,13 @@ def test_constructor_invalid_kwargs_ValueError(bad_kwargs):
 def test_two_models_ValueError():
     with pytest.raises(ValueError):
         LangevinGroup(name="test_name", num_params=NUM_PARAMS, score_model=nn(), energy_model=nn())
+
+def test_score_model_wrong_num_inputs_ValueError():
+    with pytest.raises(ValueError):
+        neural_network = NeuralNetwork(num_inputs=2, num_outputs=3, width=4, depth=1)
+        LangevinGroup(name="test name", num_params=3, score_model=neural_network)
+
+def test_score_model_wrong_num_outputs_ValueError():
+    with pytest.raises(ValueError):
+        neural_network = NeuralNetwork(num_inputs=3, num_outputs=1, width=4, depth=1)
+        LangevinGroup(name="test name", num_params=3, score_model=neural_network)
