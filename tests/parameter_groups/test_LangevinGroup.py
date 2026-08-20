@@ -1,6 +1,7 @@
 from pypolymix.parameter_groups import LangevinGroup, ParameterGroup
 from pypolymix.surrogate_models import NeuralNetwork
 import pytest
+import torch
 
 NUM_PARAMS = 3
 def nn():
@@ -18,9 +19,25 @@ def test_negative_num_particles_ValueError():
     with pytest.raises(ValueError):
         LangevinGroup(name='test name', num_params=NUM_PARAMS, score_model=nn(), num_particles=-1)
 
-def sample_parameters_returns_Tensor(langevin_group):
+def test_sample_parameters_returns_Tensor(langevin_group):
     parameters = langevin_group.sample_parameters()
     assert isinstance(parameters, torch.Tensor)
+
+def test_sample_parameters_shape(langevin_group):
+    parameters = langevin_group.sample_parameters(num_samples=8)
+    assert parameters.size() == torch.Size([8, 3])
+
+def test_variational_distribution_runtime_error(langevin_group):
+    with pytest.raises(RuntimeError):
+        langevin_group.variational_distribution()
+
+def test_distribution_loss_score_model_returns_Tensor(langevin_group):
+    loss = langevin_group.distribution_loss()
+    assert isinstance(loss, torch.Tensor)
+
+def test_distribution_loss_score_model_returns_scalar(langevin_group):
+    loss = langevin_group.distribution_loss()
+    assert loss.shape == torch.Size([])
 
 # Check that bad keyword arguments result in errors
 # each entry in the bad_kwargs list is tested independently
@@ -40,4 +57,9 @@ def sample_parameters_returns_Tensor(langevin_group):
 
 def test_constructor_invalid_kwargs_ValueError(bad_kwargs):
     with pytest.raises(ValueError):
-        LangevinGroup(name="test name", num_params=3, score_model=nn(), **bad_kwargs)
+        # two stars to unpack the bad_kwargs dictionary into keyword arguments
+        LangevinGroup(name="test name", num_params=NUM_PARAMS, score_model=nn(), **bad_kwargs)
+
+def test_two_models_ValueError():
+    with pytest.raises(ValueError):
+        LangevinGroup(name="test_name", num_params=NUM_PARAMS, score_model=nn(), energy_model=nn())
