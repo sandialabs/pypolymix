@@ -1,4 +1,3 @@
-# TODO - warning about not having numpy installed
 import torch
 
 from pypolymix.parameter_groups import IIDGaussianGroup, DeterministicGroup
