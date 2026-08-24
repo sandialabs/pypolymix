@@ -82,3 +82,8 @@ def test_score_model_wrong_num_outputs_ValueError():
     with pytest.raises(ValueError):
         neural_network = NeuralNetwork(num_inputs=3, num_outputs=1, width=4, depth=1)
         LangevinGroup(name="test name", num_params=3, score_model=neural_network)
+
+def test_validate_surrogate_requires_num_inputs_and_num_outputs():
+    bad_surrogate = 67 # not a surrogate model
+    with pytest.raises(ValueError):
+        LangevinGroup(name="test", num_params=2, score_model=bad_surrogate)
