@@ -14,7 +14,7 @@ class ParameterGroup(nn.Module, ABC):
 
     Subclasses typically expose unconstrained PyTorch parameters that define the
     variational distribution $q(\\theta)$. During training their ``distribution_loss``
-    is added to the surrogate loss to enforce Bayesian regularisation.
+    is added to the surrogate loss to enforce Bayesian regularization.
 
     Example:
         ```python

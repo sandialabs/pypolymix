@@ -31,7 +31,7 @@ loss = y.mean() + model.distribution_loss()
 
 ## Parameter Groups
 
-Parameter groups describe how parameters are sampled and regularised. They can
+Parameter groups describe how parameters are sampled and regularized. They can
 be mixed (e.g. deterministic biases and stochastic weights) by instantiating
 multiple groups and passing them to the same stochastic model.
 
@@ -45,13 +45,13 @@ the same interface as the stochastic groups.
 ### IIDGaussianGroup
 
 Independent Normal posterior with per-parameter mean and (log) std that supports
-reparameterised sampling for variational inference.
+reparameterized sampling for variational inference.
 
 ::: pypolymix.parameter_groups.gaussian.IIDGaussianGroup
 
 ### GaussianGroup
 
-Full-covariance Gaussian variational family parameterised by a Cholesky factor,
+Full-covariance Gaussian variational family parameterized by a Cholesky factor,
 useful when posterior correlations cannot be ignored.
 
 ::: pypolymix.parameter_groups.gaussian.GaussianGroup

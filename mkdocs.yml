@@ -15,8 +15,9 @@ nav:
     - Low Rank Covariance: examples/low_rank_covariance.ipynb
     - Langevin Score Polynomial Chaos: examples/langevin_score_pce.ipynb
     - Langevin Energy Polynomial Chaos: examples/langevin_energy_pce.ipynb
-  - Acknowledgements: 
-    - Acknowledgements: ack.md
+    - Constitutive Model Surrogate: examples/constitutive_model/README.md
+  - Acknowledgments: 
+    - Acknowledgments: ack.md
 
 theme:
   # name: material
@@ -64,6 +65,13 @@ plugins:
   #     headless_chrome_path: /Applications/Google Chrome.app/Contents/MacOS/Google Chrome
   #     output_path: "pypolymix-docs-v0_1_0.pdf"
   
+
+# Artifacts produced by running the constitutive-model example in place. They are
+# git-ignored, but a local build would otherwise copy them into the site.
+exclude_docs: |
+  examples/constitutive_model/toy_data/
+  examples/constitutive_model/runs/
+  **/__pycache__/
 
 markdown_extensions:
   - pymdownx.arithmatex:

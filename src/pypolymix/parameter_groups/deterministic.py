@@ -8,7 +8,7 @@ from .base import ParameterGroup
 class DeterministicGroup(ParameterGroup):
     """Parameter group for deterministic inference.
 
-    Use this when optimisation should learn a single point estimate rather than
+    Use this when optimization should learn a single point estimate rather than
     sampling from a posterior approximation.
 
     Example:

@@ -92,3 +92,9 @@ pre-commit install
 ## Examples
 
 Notebooks live in `docs/examples/` and are rendered on the documentation site.
+
+For a full end-to-end workflow rather than a single notebook, see
+[`docs/examples/constitutive_model/`](docs/examples/constitutive_model/): a
+runnable mixture-of-experts surrogate for a constitutive model, covering the data
+contract, transforms, training with checkpointing, and evaluation by integrating
+the learned right-hand side forward in time.

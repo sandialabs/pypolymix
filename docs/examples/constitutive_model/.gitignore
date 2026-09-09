@@ -1,0 +1,4 @@
+# Everything below is produced by data.py / train.py / evaluate.py.
+# The reference images embedded in README.md live in figures/ and are committed.
+toy_data/
+runs/
