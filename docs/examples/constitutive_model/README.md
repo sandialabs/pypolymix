@@ -37,7 +37,7 @@ replacing $f$ with a surrogate.
 The learning problem is ordinary supervised regression,
 
 $$
-x = [\,q,\ u\,] \in \mathbb{R}^{6}
+x = [q,\ u] \in \mathbb{R}^{6}
 \qquad\longmapsto\qquad
 y = \dot q \in \mathbb{R}^{3},
 $$
@@ -52,9 +52,9 @@ one set of weights, and gradient descent trades them off against each other. A
 mixture
 
 $$
-f(x) = \sum_{e=1}^{E} g_e(x)\, f_e(x),
+f(x) = \sum_{e=1}^{E} g_e(x) f_e(x),
 \qquad
-g(x) = \operatorname{softmax}\bigl(h(x)\bigr),
+g(x) = \text{softmax}\bigl(h(x)\bigr),
 $$
 
 lets a small gating network $h$ partition the input space and lets each expert
