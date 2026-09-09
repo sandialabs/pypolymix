@@ -1,0 +1,19 @@
+/* Add margin after mkdocstrings source code blocks */
+.doc-contents .highlight {
+    margin-bottom: 1em;
+}
+
+/* Add line break or spacing before/after the "Source code in..." line */
+.doc-contents details summary {
+    margin-top: 0.5em;
+    margin-bottom: 1em;
+}
+
+.doc-contents details pre {
+    margin-top: 0.5em;
+}
+
+/* This rule specifically targets function/method names within mkdocstrings output */
+.doc-object > .doc-heading {
+    display: none;
+}

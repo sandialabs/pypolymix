@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><link rel="canonical" href="https://sandialabs.github.io/pypolymix/examples/gui_preparation/" />
+      <link rel="shortcut icon" href="../../img/favicon.ico" />
+    <title>data_transformation.py - pypolymix</title>
+    <link rel="stylesheet" href="../../css/theme.css" />
+    <link rel="stylesheet" href="../../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+        <link href="../../assets/_mkdocstrings.css" rel="stylesheet" />
+        <link href="../../stylesheets/extra.css" rel="stylesheet" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "data_transformation.py";
+        var mkdocs_page_input_path = "examples/gui_preparation/README.md";
+        var mkdocs_page_url = "/pypolymix/examples/gui_preparation/";
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="../..">
+          <img src="../../img/logo.png" class="logo" alt="Logo"/>
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../..">Home</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../theo/">Theory</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Package Reference</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../api/">API</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Examples</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../pce/">Stochastic Polynomial Chaos Expansion</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../nn/">Stochastic Neural Network</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../moe/">Stochastic Mixture of Experts</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../full_covariance/">Full-Covariance Polynomial Chaos</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../custom_priors/">Priors Guide Ambiguous Line Fits</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../low_rank_covariance/">Low-Rank Covariance Polynomial Chaos</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../langevin_score_pce/">Langevin Polynomial Chaos</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../langevin_energy_pce/">Langevin Polynomial Chaos with an Energy Model</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../constitutive_model/">Constitutive Model Surrogate</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Acknowledgments</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../ack/">Acknowledgments</a>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../..">pypolymix</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../.." class="icon icon-home" aria-label="Docs"></a></li>
+      <li class="breadcrumb-item active">data_transformation.py</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="data_transformationpy">data_transformation.py</h1>
+<p>Transforms a CSV file with inputs, predicted outputs, and reference outputs to three .pickle files that can be used for data visualization in a GUI.</p>
+<p>Quickstart: </p>
+<p><code>uv run python data_transformation.py --help</code></p>
+<p><strong>Note that this is a writeup for the requirements and decisions involved in developing <code>data_transformation.py</code>.</strong></p>
+<p><code>relative_error_transformation.py</code> has a similar idea and the same output format, except the output columns in the csv contain relative error instead of reference and predicted values.</p>
+<h2 id="given-test_predictionscsv">Given: test_predictions.csv</h2>
+<p>A CSV file with 1.2M rows and 12 columns.</p>
+<p>6 Inputs:
+- input_evm
+- input_rhom
+- input_rhoi
+- input_temperature
+- input_vmJ2
+- input_flux</p>
+<p>3 Predicted Outputs:
+- predicted_devm_dt
+- predicted_drhom_dt
+- predicted_drhoi_dt</p>
+<p>3 Reference Outputs:
+- reference_devm_dt
+- reference_drhom_dt,
+- reference_drhoi_dt</p>
+<p>Note that some of the entry values are things like 6.86e-13 insetad of being written out as decimals.</p>
+<h2 id="wanted-visualize-the-differences-between-predicted-and-reference-outputs-in-the-gui">Wanted: Visualize the differences between predicted and reference outputs in the GUI</h2>
+<p>Steps:
+1. Load input and reference output data into the GUI
+    1. Transform the input and reference data from <code>test_predictions.csv</code> to the data structure that the GUI expects
+    2. Store the data structure in a .pickle file on disk</p>
+<ol>
+<li>
+<p>Load the training results into the GUI</p>
+<ol>
+<li>Transform all data from <code>test_predictions.csv</code> to the data structure that the GUI expects</li>
+<li>Store the data structure in a .pickle file on disk</li>
+</ol>
+</li>
+<li>
+<p>Configure the GUI so that the visualizations are meaningful</p>
+</li>
+</ol>
+<h2 id="gui-input-data-structure">GUI Input Data Structure</h2>
+<p>The object in the pickle file is stored as a dictionary.</p>
+<p>The dictionary has one key: <code>'data'</code>
+<code>obj['data']</code> has entries for each input. The output is stored under <code>obj['data']['U']</code></p>
+<p>All input/output variables should have a numpy array as their value. All numpy arrays should be the same length.</p>
+<p>example format:
+- inputs: <code>obj['data']['x1']</code> and <code>obj['data']['x2']</code>
+- outputs: <code>obj['data']['U']['out1']</code> and <code>obj['data']['U']['out2']</code></p>
+<h2 id="gui-training-results-data-structure">GUI Training Results Data Structure</h2>
+<p>For visualizing training results, the GUI requires two files: <code>train_output.pickle</code> and <code>SM.pickle</code>. We store these files in a specified directory, or ./training_results_<input1>_<input2> if none is specified.</p>
+<h4 id="train_outputpickle"><code>train_output.pickle</code></h4>
+<p>Contains the predictions and the actual input and output values.</p>
+<p>Stored as a dictionary with the following keys
+- "U" -&gt; a dictionary (str -&gt; np.array) of the actual output values
+- "Usm" -&gt; a dictionary (str -&gt; np.array) of the <strong>s</strong>urrogate <strong>m</strong>odel's predicted output values
+- "unmapped" -&gt; a dictionary (str -&gt; np.array) of the input values</p>
+<p>Note that the GUI assumes U and Usm are in a scaled output space. Our data has them in physical output space. To work around this, we use the physical values and provide an identity transform in SM["output_maps"].</p>
+<h4 id="smpickle"><code>SM.pickle</code></h4>
+<p>Stores the trained <strong>S</strong>urrogate <strong>M</strong>odel in the format required by the GUI. Since the input data is provided, but not the surrogate model, we'll make a minimal SM.pickle file.</p>
+              
+            </div>
+          </div><footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+    
+  </span>
+</div>
+    <script src="../../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "../..";</script>
+    <script src="../../js/theme_extra.js"></script>
+    <script src="../../js/theme.js"></script>
+      <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+      <script src="../../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>
