@@ -21,16 +21,24 @@ class IIDGaussianGroup(ParameterGroup):
         ```
     """
 
-    def __init__(self, name: str, num_params: int, prior: Optional[Prior] = None):
+    def __init__(
+        self,
+        name: str,
+        num_params: int,
+        prior: Optional[Prior] = None,
+        *,
+        min_std: float = 1e-6,
+    ):
         """Create learnable mean/log-std parameters for every coefficient."""
         super().__init__(name, num_params, prior=prior)
         self.mean = nn.Parameter(torch.randn(num_params))
         self.log_std = nn.Parameter(torch.full((num_params,), -0.5))  # start small
+        self.min_std = float(min_std)
 
     @property
     def std(self) -> torch.Tensor:
-        """Positive standard deviation parameter obtained via ``exp``."""
-        return self.log_std.exp()
+        """Positive standard deviation parameter obtained via ``exp``, floored at ``min_std``."""
+        return self.log_std.exp().clamp_min(self.min_std)
 
     def variational_distribution(self) -> td.Distribution:
         """Return an independent normal distribution over all parameters."""
@@ -46,6 +54,9 @@ class GaussianGroup(ParameterGroup):
     """Full-covariance Gaussian variational family with a learnable Cholesky factor.
 
     This is useful when posterior correlations between parameters are important.
+
+    ``min_scale`` is a floor on the **standard deviation** implied by the
+    Cholesky diagonal, not on the variance.
 
     Example:
         ```python
@@ -63,12 +74,12 @@ class GaussianGroup(ParameterGroup):
         prior=None,
         *,
         init_scale_diag: float = 1e-1,
-        jitter: float = 1e-6,
+        min_scale: float = 1e-6,
     ):
         """Parameterize a full-covariance Gaussian via a packed Cholesky factor."""
         super().__init__(name, num_params, prior=prior)
         d = num_params
-        self.jitter = float(jitter)
+        self.min_scale = float(min_scale)
 
         # parameters
         self.mean = nn.Parameter(torch.zeros(d))
@@ -81,8 +92,8 @@ class GaussianGroup(ParameterGroup):
 
         # initialize to ~diag(init_scale_diag)
         with torch.no_grad():
-            # set diagonal entries in raw_tril so softplus(raw) ≈ init_scale_diag - jitter
-            s = max(init_scale_diag - self.jitter, 1e-12)
+            # set diagonal entries in raw_tril so softplus(raw) ≈ init_scale_diag - min_scale
+            s = max(init_scale_diag - self.min_scale, 1e-12)
             diag_raw = torch.log(torch.expm1(torch.tensor(s)))
             # positions where i == j are diagonals in the packed vector order
             mask_diag = self._tri_i == self._tri_j
@@ -94,8 +105,8 @@ class GaussianGroup(ParameterGroup):
         d = self.mean.numel()
         L = torch.zeros(d, d, device=self.mean.device, dtype=self.mean.dtype)
         L[self._tri_i, self._tri_j] = self.raw_tril
-        # enforce SPD via softplus on diagonal (+ jitter)
-        diag_pos = F.softplus(torch.diagonal(L)) + self.jitter
+        # enforce SPD via softplus on diagonal (+ min_scale floor on the std)
+        diag_pos = F.softplus(torch.diagonal(L)) + self.min_scale
         L = L - torch.diag_embed(torch.diagonal(L)) + torch.diag_embed(diag_pos)
         return L
 
@@ -115,6 +126,10 @@ class LowRankGaussianGroup(ParameterGroup):
     controlled by ``rank``. This captures the dominant correlations without the
     ``O(d^2)`` parameters and compute cost of a full Cholesky factor.
 
+    ``min_variance`` floors the additive diagonal **variance** term ``d`` in
+    ``Sigma = U U^T + diag(d)``; the effective std floor is
+    ``sqrt(min_variance)``.
+
     Example:
         ```python
         >>> group = LowRankGaussianGroup("weights", num_params=8, rank=3)
@@ -133,28 +148,28 @@ class LowRankGaussianGroup(ParameterGroup):
         *,
         init_scale_diag: float = 1e-1,
         init_scale_factor: float = 1e-1,
-        jitter: float = 1e-6,
+        min_variance: float = 1e-6,
     ):
         if rank <= 0 or rank > num_params:
             raise ValueError("rank must be in [1, num_params]")
 
         super().__init__(name, num_params, prior=prior)
         self.rank = int(rank)
-        self.jitter = float(jitter)
+        self.min_variance = float(min_variance)
 
         self.mean = nn.Parameter(torch.zeros(num_params))
         self.cov_factor = nn.Parameter(torch.randn(num_params, self.rank) * init_scale_factor)
         self.raw_cov_diag = nn.Parameter(torch.zeros(num_params))
 
         with torch.no_grad():
-            s = max(init_scale_diag - self.jitter, 1e-12)
+            s = max(init_scale_diag - self.min_variance, 1e-12)
             diag_raw = torch.log(torch.expm1(torch.tensor(s)))
             self.raw_cov_diag.fill_(diag_raw)
 
     @property
     def _cov_diag(self) -> torch.Tensor:
         """Positive diagonal component ensuring SPD covariance."""
-        return F.softplus(self.raw_cov_diag) + self.jitter
+        return F.softplus(self.raw_cov_diag) + self.min_variance
 
     def variational_distribution(self) -> td.Distribution:
         return td.LowRankMultivariateNormal(
