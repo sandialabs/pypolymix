@@ -98,6 +98,58 @@ class GaussianPrior(Prior):
         return td.MultivariateNormal(loc=mean, covariance_matrix=cov)
 
 
+class UniformPrior(Prior):
+    """Independent uniform prior :math:`U(\\text{low}, \\text{high})` per parameter.
+
+    ``docs/theo.md`` documents that, for a uniform prior,
+    :math:`\\text{KL}(q \\,\\|\\, p)` reduces to
+    :math:`-\\tfrac{1}{2}\\log|\\Sigma_q| + \\text{const}`. That reduction is only
+    exact when all of :math:`q`'s probability mass lies within ``[low, high]``;
+    it is an approximation (ignoring the vanishingly small tail mass) whenever
+    :math:`q` has unbounded support, as an ``IIDGaussianGroup``/``GaussianGroup``
+    does.
+
+    **Caveat (verified against this project's torch version):**
+    ``torch.distributions`` *does* register an analytic
+    ``kl_divergence(Normal, Uniform)`` (via ``_kl_normal_infinity``), and it
+    unconditionally returns ``+inf`` -- regardless of ``low``/``high`` or how
+    well ``q``'s mean is centered -- because a Gaussian has nonzero density
+    everywhere outside any bounded interval, so the true KL divergence from an
+    unbounded distribution to a compactly-supported one genuinely is infinite.
+    Consequently ``ParameterGroup.distribution_loss()`` takes its analytic
+    branch (no ``NotImplementedError`` is raised) and returns a constant
+    ``+inf`` tensor with no gradient, for *any* Gaussian variational family
+    paired with this prior; it never reaches the Monte Carlo fallback for that
+    combination. Making ``distribution_loss()`` degrade gracefully for this
+    pairing (e.g. detecting non-finite analytic KL and falling back to the MC
+    estimator) is tracked separately as KL-estimator machinery work and is
+    intentionally not changed here.
+
+    ``Uniform`` also has compact support in its own right: if a variational
+    family *with bounded support* places mass or samples outside
+    ``[low, high]``, ``log_prob`` returns ``-inf``, which can produce ``NaN``
+    gradients in a Monte Carlo KL estimate. Choose ``low``/``high`` generously
+    wide relative to the expected posterior.
+
+    Example:
+        >>> prior = UniformPrior(low=-1.0, high=1.0)
+        >>> prior.distribution(torch.Size([4]), None, None).sample().shape
+        torch.Size([4])
+    """
+
+    def __init__(self, low: TensorOrFloat = -10.0, high: TensorOrFloat = 10.0):
+        """Persist broadcastable buffers for the requested low/high bounds."""
+        super().__init__()
+        self.register_buffer("_low", torch.as_tensor(low), persistent=False)
+        self.register_buffer("_high", torch.as_tensor(high), persistent=False)
+
+    def distribution(self, event_shape, device, dtype) -> td.Distribution:
+        """Return ``Independent(Uniform(low, high), 1)`` with broadcasted parameters."""
+        low = _as_tensor(self._low, device, dtype, event_shape)
+        high = _as_tensor(self._high, device, dtype, event_shape)
+        return td.Independent(td.Uniform(low, high), 1)
+
+
 class LaplacePrior(Prior):
     """IID Laplace prior that encourages sparsity.
 
