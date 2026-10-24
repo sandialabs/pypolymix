@@ -1,8 +1,10 @@
 import torch
 
-from pypolymix.parameter_groups import IIDGaussianGroup, DeterministicGroup
-from pypolymix.surrogate_models import NeuralNetwork
+import pypolymix
 from pypolymix import StochasticModel
+from pypolymix.parameter_groups import DeterministicGroup, IIDGaussianGroup
+from pypolymix.surrogate_models import NeuralNetwork
+
 
 # setup NN and input data for all of the tests
 def make_problem():
@@ -15,7 +17,9 @@ def make_problem():
 
     width = 16
     depth = 1
-    surrogate_model = NeuralNetwork(num_inputs=1, num_outputs=2, width=width, depth=depth, activation=torch.nn.functional.tanh)
+    surrogate_model = NeuralNetwork(
+        num_inputs=1, num_outputs=2, width=width, depth=depth, activation=torch.nn.functional.tanh
+    )
     num_params = surrogate_model.num_params()
     print(f"This model has {num_params} parameters")
 
@@ -36,35 +40,34 @@ def make_problem():
     ]
     # surrogate_model: The neural network function
     # model: the network's stochastic manager of weights and biases
-    model = StochasticModel(
-        surrogate_model=surrogate_model, parameter_groups=parameter_groups
-    )
+    model = StochasticModel(surrogate_model=surrogate_model, parameter_groups=parameter_groups)
     print(f"Created stochastic model with {model.num_params()} parameters")
     return surrogate_model, model, X, Y
 
+
 # Note: this can't be factored out from here and test_moe.py
-# because this training loop uses log_tau
-# num_epochs, num_samples, weight_factor and scheduler
-# will be the primary parameters tested
-def train_model(surrogate_model, model, X, Y,
-                num_epochs=10_000, num_samples=100,
-                weight_factor=1e-2, lr=1e-3, weight_decay=1e-4):
-    # Learnable global precision
-    log_tau = torch.nn.Parameter(torch.tensor(0.0))  # τ = exp(log_tau)
+# because this training loop uses pypolymix.elbo_loss with a per-output
+# GaussianLikelihood (not the old log_tau precision trick / weight_factor
+# anti-pattern -- see PM-07/PM-09 handoff notes).
+# num_epochs, num_samples and scheduler are the primary parameters tested.
+def train_model(
+    surrogate_model, model, X, Y, num_epochs=10_000, num_samples=100, lr=1e-3, weight_decay=1e-4
+):
+    # Learnable per-output Gaussian observation noise
+    likelihood = pypolymix.likelihoods.GaussianLikelihood(num_outputs=Y.shape[-1])
 
-    # Optimizer: AdamW
+    # Optimizer: AdamW (likelihood's log_sigma excluded from weight decay)
     optimizer = torch.optim.AdamW(
-        list(model.parameters()) + [log_tau], lr=lr, weight_decay=weight_decay
+        [
+            {"params": model.parameters(), "weight_decay": weight_decay},
+            {"params": likelihood.no_decay_parameters(), "weight_decay": 0.0},
+        ],
+        lr=lr,
     )
-
-    # Loss
-    loss_fn = torch.nn.MSELoss(reduction="sum")
 
     # Scheduler: OneCycleLR
     scheduler = torch.optim.lr_scheduler.OneCycleLR(
-        optimizer,
-        max_lr=10 * lr,
-        total_steps=num_epochs
+        optimizer, max_lr=10 * lr, total_steps=num_epochs
     )
 
     # Train the stochastic model
@@ -72,14 +75,12 @@ def train_model(surrogate_model, model, X, Y,
         optimizer.zero_grad()
 
         # Evaluate parameters and model
-        params = model.sample_parameters(num_samples=num_samples)
-        Y_hat = surrogate_model(X, params)
+        Y_hat = model(X, num_samples=num_samples)  # (S, batch, outputs)
 
         # Losses
-        data_loss = loss_fn(Y_hat, Y.unsqueeze(0).expand_as(Y_hat)) / num_samples
-        data_loss *= torch.exp(log_tau)
-        distribution_loss = model.distribution_loss()
-        total_loss = data_loss + weight_factor * distribution_loss
+        nll = likelihood.nll(Y_hat, Y.unsqueeze(0).expand_as(Y_hat))
+        kl = model.distribution_loss()
+        total_loss = pypolymix.elbo_loss(nll, kl, n_train=X.shape[0], temperature=1.0)
 
         # Backprop + step
         total_loss.backward()
@@ -92,26 +93,36 @@ def train_model(surrogate_model, model, X, Y,
         #     print(
         #         f"Epoch {epoch + 1:5d} | "
         #         f"learning rate = {current_lr:.6f} | "
-        #         f"data loss = {data_loss.item():.4f} | "
-        #         f"distribution loss = {distribution_loss.item():.4f} | "
-        #         f"total loss = {total_loss.item():.4f}"
+        #         f"nll = {nll.item():.4f} | "
+        #         f"kl = {kl.item():.4f} | "
+        #         f"total loss = {total_loss.item():.4f} | "
+        #         f"log_sigma = {likelihood.log_sigma.detach().tolist()}"
         #     )
     # total_loss is a tensor, return a float
     return total_loss.item()
 
+
 def is_better(expected_better, expected_worse):
-    '''
+    """
     Check that expected_better is not too much more than expected_worse
     Ideally it would be less over multiple samples
     But the tests are already long-running, so for now close is good enough
-    '''
-    return expected_better < expected_worse + 10
+
+    The margin (1.0) is re-derived for the corrected elbo_loss scale: with the
+    old log_tau/weight_factor recipe total_loss ran ~1-8 and a margin of 10
+    was already generous; with the normalizer fix total_loss instead runs
+    ~0.5-3 (it can even go negative, since a Gaussian NLL is a log-density,
+    not a non-negative quantity), so a margin on the same order as that scale
+    still catches a real regression without being vacuous.
+    """
+    return expected_better < expected_worse + 1.0
+
 
 def test_returns_float():
     surrogate_model, model, X, Y = make_problem()
-    total_loss = train_model(surrogate_model, model, X, Y,
-                             num_epochs=10, num_samples=2)
+    total_loss = train_model(surrogate_model, model, X, Y, num_epochs=10, num_samples=2)
     assert isinstance(total_loss, float)
+
 
 def test_epochs():
     loss = {}
@@ -121,6 +132,7 @@ def test_epochs():
     assert is_better(loss[3_000], loss[1_000])
     assert is_better(loss[10_000], loss[3_000])
 
+
 def test_num_samples():
     loss = {}
     for num in [1, 10, 100]:
@@ -129,13 +141,10 @@ def test_num_samples():
     assert is_better(loss[10], loss[1])
     assert is_better(loss[100], loss[10])
 
-# Higher weight factor results in more total loss
-# because total_loss = data_loss + weight_factor * distribution loss
-def test_weight_factor():
-    loss = {}
-    for num in [1, 0.1, 0.01, 0.001]:
-        surrogate_model, model, X, Y = make_problem()
-        loss[num] = train_model(surrogate_model, model, X, Y, weight_factor=num)
-    assert is_better(loss[0.1], loss[1])
-    assert is_better(loss[0.01], loss[0.1])
-    assert is_better(loss[0.001], loss[0.01])
+
+# Note: there used to be a test_weight_factor() here that swept the
+# weight_factor anti-pattern's arbitrary KL scale and asserted a smaller
+# weight_factor gives smaller total_loss. pypolymix.elbo_loss removes that
+# knob entirely (KL is divided by n_train, the only scale consistent with a
+# proper ELBO -- see elbo_loss's docstring), so there is no longer a
+# weight_factor to sweep.
