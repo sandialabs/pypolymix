@@ -15,6 +15,7 @@ nav:
     - Low Rank Covariance: examples/low_rank_covariance.ipynb
     - Langevin Score Polynomial Chaos: examples/langevin_score_pce.ipynb
     - Langevin Energy Polynomial Chaos: examples/langevin_energy_pce.ipynb
+    - KL/Entropy Estimator Comparison: examples/kl_estimators_comparison.ipynb
     - Constitutive Model Surrogate: examples/constitutive_model/README.md
   - Acknowledgments: 
     - Acknowledgments: ack.md

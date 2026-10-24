@@ -187,7 +187,13 @@ def _knn_entropy(samples: torch.Tensor, k: int) -> torch.Tensor:
     """
     num_samples, dim = samples.shape
     distances = torch.cdist(samples, samples)
-    distances.fill_diagonal_(float("inf"))
+    # Out-of-place: `cdist`'s output is reused by autograd's backward pass, and
+    # an in-place `fill_diagonal_` here would bump its version counter and
+    # break gradient computation whenever `samples` requires grad (e.g.
+    # LangevinGroup's implicit particles, or `rsample()`-based reparameterized
+    # samples) with a "modified by an inplace operation" RuntimeError.
+    diag_mask = torch.eye(num_samples, dtype=torch.bool, device=samples.device)
+    distances = distances.masked_fill(diag_mask, float("inf"))
     r_k = torch.kthvalue(distances, k, dim=1).values  # (S,)
 
     log_unit_ball_volume = (dim / 2.0) * math.log(math.pi) - torch.lgamma(

@@ -164,6 +164,24 @@ def test_explicit_kl_estimator_bypasses_fallback_on_error(monkeypatch):
         group.distribution_loss()
 
 
+def test_knn_entropy_kl_is_differentiable_through_samples():
+    """``KNNEntropyKL`` must support backprop through its ``samples`` input --
+    required by both reparameterized samplers (``rsample()``) and implicit
+    samplers (``LangevinGroup``'s particles). Regression test for a bug where
+    an in-place ``fill_diagonal_`` on ``torch.cdist``'s output broke autograd
+    with "modified by an inplace operation" whenever ``samples`` required
+    grad (PM-05)."""
+    torch.manual_seed(3)
+    group = _FakeGroup(num_params=2, prior=IIDGaussianPrior())
+    samples = torch.randn(12, 2, requires_grad=True)
+
+    loss = KNNEntropyKL(k=4).estimate(group, samples)
+    loss.backward()
+
+    assert samples.grad is not None
+    assert torch.isfinite(samples.grad).all()
+
+
 def test_reparam_monte_carlo_kl_estimator_usable_directly():
     group = IIDGaussianGroup(name="g", num_params=3)
     samples = group.variational_distribution().rsample((64,))
