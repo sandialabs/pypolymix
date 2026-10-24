@@ -1,13 +1,21 @@
 # Import statements
 import torch
 
-from pypolymix.parameter_groups import DeterministicGroup, IIDGaussianGroup
-from pypolymix.surrogate_models import PolynomialChaosExpansion, MixtureOfExperts, GatingNetwork
 from pypolymix import StochasticModel
+from pypolymix.parameter_groups import DeterministicGroup, IIDGaussianGroup
+from pypolymix.surrogate_models import GatingNetwork, MixtureOfExperts, PolynomialChaosExpansion
+
 from .train_moe import train_moe_model
+
 
 # setup NN and input data for all of the tests
 def make_problem():
+    # Fix the seed so cross-run comparisons (test_epochs, test_num_samples)
+    # compare the same underlying problem instead of a fresh random draw each
+    # call -- this was missing before (unlike test_nn.py's manual_seed(2048)
+    # and three_moe_helpers.py's manual_seed(1)) and made those assertions
+    # flaky independent of the elbo_loss fix (PM-10).
+    torch.manual_seed(1234)
     # Generate synthetic data
     num_samples = 50
     X = 2 * torch.rand(num_samples, 1) - 1
@@ -20,7 +28,13 @@ def make_problem():
             PolynomialChaosExpansion(num_inputs=1, num_outputs=1, degree=3),
             PolynomialChaosExpansion(num_inputs=1, num_outputs=1, degree=3),
         ],
-        gating_network=GatingNetwork(num_inputs=1, num_experts=2, width=width, depth=depth, activation=torch.nn.functional.tanh)
+        gating_network=GatingNetwork(
+            num_inputs=1,
+            num_experts=2,
+            width=width,
+            depth=depth,
+            activation=torch.nn.functional.tanh,
+        ),
     )
 
     num_params = surrogate_model.num_params()
@@ -45,27 +59,35 @@ def make_problem():
     parameter_groups += [  # Output layer
         IIDGaussianGroup("gating_output_weights", 2 * width),
         IIDGaussianGroup("gating_output_biases", 2),
-    ] 
+    ]
 
-    model = StochasticModel(
-        surrogate_model=surrogate_model, parameter_groups=parameter_groups
-    )
+    model = StochasticModel(surrogate_model=surrogate_model, parameter_groups=parameter_groups)
     print(f"Created stochastic model with {model.num_params()} parameters")
     return surrogate_model, model, X, Y
 
+
 def is_better(expected_better, expected_worse):
-    '''
+    """
     Check that expected_better is not too much more than expected_worse
     Ideally it would be less over multiple samples
     But the tests are already long-running, so for now close is good enough
-    '''
-    return expected_better < expected_worse + 10
+
+    The margin (1.0) is re-derived for the corrected elbo_loss scale: with the
+    old (weight factor) * distribution_loss recipe total_loss ran large
+    enough that a margin of 10 was needed; with the normalizer/n_train fix
+    total_loss instead runs on an O(1) scale (it can even go negative, since
+    a Gaussian NLL is a log-density, not a non-negative quantity), so a
+    margin on that scale still catches a real regression without being
+    vacuous.
+    """
+    return expected_better < expected_worse + 1.0
+
 
 def test_returns_float():
     surrogate_model, model, X, Y = make_problem()
-    total_loss = train_moe_model(surrogate_model, model, X, Y,
-                             num_epochs=10, num_samples=2)
+    total_loss = train_moe_model(surrogate_model, model, X, Y, num_epochs=10, num_samples=2)
     assert isinstance(total_loss, float)
+
 
 def test_epochs():
     epoch_losses = {}
@@ -76,6 +98,7 @@ def test_epochs():
     assert is_better(epoch_losses[3_000], epoch_losses[1_000])
     assert is_better(epoch_losses[10_000], epoch_losses[3000])
 
+
 def test_num_samples():
     loss = {}
     for num in [1, 10, 100]:
@@ -84,13 +107,9 @@ def test_num_samples():
     assert is_better(loss[10], loss[1])
     assert is_better(loss[100], loss[10])
 
-# Higher weight factor results in more total loss
-# because total_loss = data_loss + weight_factor * distribution loss
-def test_weight_factor():
-    loss = {}
-    for num in [1, 0.1, 0.01, 0.001]:
-        surrogate_model, model, X, Y = make_problem()
-        loss[num] = train_moe_model(surrogate_model, model, X, Y, weight_factor=num)
-    assert is_better(loss[0.1], loss[1])
-    assert is_better(loss[0.01], loss[0.1])
-    assert is_better(loss[0.001], loss[0.01])
+
+# Note: there used to be a test for the removed free KL-scaling hyperparameter
+# here that swept its arbitrary value and asserted a smaller value gives a
+# smaller total_loss. pypolymix.elbo_loss removes that knob entirely (KL is
+# divided by n_train, the only scale consistent with a proper ELBO -- see
+# elbo_loss's docstring), so there is no longer such a knob to sweep.
