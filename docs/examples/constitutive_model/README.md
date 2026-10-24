@@ -344,43 +344,106 @@ Figures go to `<run_dir>/figures/`: `parity.png`, `gating.png`, `rollout.png`.
 ## Going stochastic
 
 The deterministic fit is a starting point. To get uncertainty in predictions,
-change the parameter groups and add one term to the loss.
+change the parameter groups and add two terms to the loss.
 
 In `model.py`, swap the group constructor:
 
 ```python
-from pypolymix.parameter_groups import IIDGaussianGroup
+from pypolymix.parameter_groups import IIDGaussianGroup, WhitenedGroup
 
-group = IIDGaussianGroup(name, num_params)
-with torch.no_grad():
-    group.mean.copy_(theta0)                                   # from the deterministic fit
-    group.log_std.copy_(torch.log(0.1 * theta0.abs().clamp_min(1e-3)))
+group = WhitenedGroup.from_point_estimate(
+    lambda n: IIDGaussianGroup(name, n),
+    center=theta0,            # from the deterministic fit
+    relative_scale=0.1,
+)
 ```
 
-In `train.py`, average the data term over posterior draws and add the divergence:
+This reparameterizes `theta = center + scale * z`, forces `z`'s prior to
+`N(0, I)`, and sets `scale = 0.1 * theta0.abs().clamp_min(1e-3)`. A shared
+`N(0, 1)` prior over weights whose magnitudes span orders of magnitude would
+be a strong and arbitrary statement; this non-centered `theta = center +
+scale * z` form sidesteps that by making the prior scale-free in `z`-space
+instead -- the same library building block every other stochastic tutorial
+in this package uses (see remark 1 below for what it does and does not
+guarantee at initialization).
+
+In `train.py`, average the data term over posterior draws under a learned
+observation-noise model, and divide the KL term by the full training-set size
+before adding it to the data term:
 
 ```python
-pred      = model(z_in, num_samples=num_samples)               # (S, batch, outputs)
-data_loss = F.mse_loss(pred, z_target.expand_as(pred))
-loss      = data_loss + model.distribution_loss()
+from pypolymix.likelihoods import GaussianLikelihood
+from pypolymix import elbo_loss
+
+likelihood = GaussianLikelihood(num_outputs=z_target.shape[-1])
+pred       = model(z_in, num_samples=num_samples)                   # (S, batch, outputs)
+nll        = likelihood.nll(pred, z_target.unsqueeze(0).expand_as(pred))
+kl         = model.distribution_loss()
+loss       = elbo_loss(nll, kl, n_train=len(train_set), temperature=1.0)
+```
+
+`n_train` is the full training-set row count (`len(train_set)`), not the
+minibatch size -- the same rule every stochastic tutorial in this package
+follows. `train.py` trains from a `DataLoader` over real minibatches, so this
+is exactly the setting where skipping the division (a plain
+`data_loss + model.distribution_loss()`, as plain MSE with no `n_train`
+scaling at all) would make the data/KL balance silently depend on
+`--batch-size`. Add a learnable per-output noise scale while you're at it:
+plain MSE has no noise model, so there is nothing for the KL term to be
+balanced against. Update the optimizer to exclude the likelihood's log-sigma
+from weight decay:
+
+```python
+optimizer = torch.optim.AdamW([
+    {"params": model.parameters(), "weight_decay": cfg.weight_decay},
+    {"params": likelihood.no_decay_parameters(), "weight_decay": 0.0},
+], lr=cfg.lr)
 ```
 
 Two important remarks:
 
-1. **Make the prior match the parameter scale.** A shared `N(0, 1)` prior over
-   weights whose magnitudes span five orders of magnitude is a strong and
-   arbitrary statement. Either pass a per-group `GaussianPrior` centered on the
-   deterministic fit, or reparameterize as `theta = theta0 + sigma0 * z` and learn
-   `z` against a `N(0, I)` prior. The second is usually easier: the prior becomes
-   scale-free, and the posterior starts at exactly `q = p` with zero divergence,
-   so early training is driven by the data alone.
-2. **You probably do not need every parameter to be stochastic.** Making only the
-   gate and the last layer of each expert stochastic, with the rest frozen at the
-   deterministic solution, captures most of the useful predictive spread at a
-   fraction of the cost -- and evaluation cost scales linearly in the number of
-   posterior draws.
+1. **`WhitenedGroup` makes the prior scale-free, but not `q = p` at init for
+   free.** Wrapping a group in `WhitenedGroup` guarantees `z`'s *prior* is
+   exactly `N(0, I)`. It does **not** by itself guarantee the *variational*
+   distribution `q(z)` starts there too -- that depends on the base group's
+   own default initialization, which the wrapper does not control.
+   `IIDGaussianGroup`'s defaults are `mean = torch.randn(n)` and
+   `log_std = -0.5` (`std ≈ 0.61`), neither of which is `N(0, 1)`, so
+   `from_point_estimate` alone starts with nonzero `KL(q(z) || N(0, I))`, not
+   the zero-divergence start one might expect. Zero both
+   `group.base_group.mean` and `group.base_group.log_std` under
+   `torch.no_grad()` after construction if an exact `q = p` start matters (see
+   `WhitenedGroup`'s docstring in `pypolymix.parameter_groups.whitened` for the
+   full derivation).
+2. **You probably do not need every parameter to be stochastic -- but check
+   whether the speedup for doing so actually applies to a mixture.**
+   `StochasticModel` can detach a group's sampled slice before concatenation,
+   skipping it in the backward pass, but only for groups that form a
+   contiguous *global prefix* of `parameter_groups` (every frozen group before
+   every trainable one). Making only the gate and the last layer of each
+   expert stochastic -- otherwise an appealing way to capture most of the
+   useful predictive spread at a fraction of the cost -- does **not** produce
+   such a prefix here: `build_moe()`'s groups list is laid out per-expert
+   (`[W0 b0 | W1 b1 | ... ]` for expert 0, then expert 1, ...), so a
+   frozen-then-stochastic split within each expert interleaves frozen and
+   trainable groups globally (frozen, frozen, ..., stochastic, *then back to
+   frozen* for the next expert). `StochasticModel` raises `ValueError` the
+   moment it sees this. Reordering the groups list so all frozen groups come
+   first globally does not fix it either: `MixtureOfExperts.get_expert_outputs`
+   slices the flat parameter vector into one contiguous block per expert,
+   sized by each expert's own `num_params()`
+   (`src/pypolymix/surrogate_models/mixture.py`) -- a global frozen-prefix
+   reordering breaks that per-expert contiguity and `MixtureOfExperts` would
+   silently slice the wrong values into each expert's forward pass (verified:
+   it raises no error, it just computes garbage). **This optimization does not
+   apply to this example as structured** without changing
+   `MixtureOfExperts`'s slicing contract itself, which is out of scope for a
+   docs update. Partial stochasticity across experts is still a reasonable
+   modeling choice here; it just does not get PM-06's sampling speedup for
+   free the way a single, non-mixture network would.
 
-Then see [Mixture of Experts](../moe.ipynb) for the stochastic MoE end to end,
+Then see [Mixture of Experts](../moe.ipynb) for the stochastic MoE end to end
+(including the `GaussianLikelihood`/`elbo_loss`/optimizer pattern above),
 [Custom Priors](../custom_priors.ipynb) for per-group priors, [Full
 Covariance](../full_covariance.ipynb) and [Low Rank
 Covariance](../low_rank_covariance.ipynb) for richer posteriors, and
