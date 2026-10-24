@@ -7,6 +7,7 @@ import torch.nn.functional as F
 
 from ..priors.base import Prior
 from .base import ParameterGroup
+from .kl_estimators import KLEstimator
 
 
 class IIDGaussianGroup(ParameterGroup):
@@ -28,9 +29,10 @@ class IIDGaussianGroup(ParameterGroup):
         prior: Optional[Prior] = None,
         *,
         min_std: float = 1e-6,
+        kl_estimator: Optional[KLEstimator] = None,
     ):
         """Create learnable mean/log-std parameters for every coefficient."""
-        super().__init__(name, num_params, prior=prior)
+        super().__init__(name, num_params, prior=prior, kl_estimator=kl_estimator)
         self.mean = nn.Parameter(torch.randn(num_params))
         self.log_std = nn.Parameter(torch.full((num_params,), -0.5))  # start small
         self.min_std = float(min_std)
@@ -75,9 +77,10 @@ class GaussianGroup(ParameterGroup):
         *,
         init_scale_diag: float = 1e-1,
         min_scale: float = 1e-6,
+        kl_estimator: Optional[KLEstimator] = None,
     ):
         """Parameterize a full-covariance Gaussian via a packed Cholesky factor."""
-        super().__init__(name, num_params, prior=prior)
+        super().__init__(name, num_params, prior=prior, kl_estimator=kl_estimator)
         d = num_params
         self.min_scale = float(min_scale)
 
@@ -149,11 +152,12 @@ class LowRankGaussianGroup(ParameterGroup):
         init_scale_diag: float = 1e-1,
         init_scale_factor: float = 1e-1,
         min_variance: float = 1e-6,
+        kl_estimator: Optional[KLEstimator] = None,
     ):
         if rank <= 0 or rank > num_params:
             raise ValueError("rank must be in [1, num_params]")
 
-        super().__init__(name, num_params, prior=prior)
+        super().__init__(name, num_params, prior=prior, kl_estimator=kl_estimator)
         self.rank = int(rank)
         self.min_variance = float(min_variance)
 

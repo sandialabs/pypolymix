@@ -7,6 +7,7 @@ import torch.nn as nn
 
 from ..priors.base import Prior
 from ..priors.common import IIDGaussianPrior
+from .kl_estimators import AnalyticKL, KLEstimator, ReparamMonteCarloKL
 
 
 class ParameterGroup(nn.Module, ABC):
@@ -27,7 +28,12 @@ class ParameterGroup(nn.Module, ABC):
     """
 
     def __init__(
-        self, name: str, num_params: int, prior: Optional[Prior] = None, kl_num_mc_samples: int = 64
+        self,
+        name: str,
+        num_params: int,
+        prior: Optional[Prior] = None,
+        kl_num_mc_samples: int = 64,
+        kl_estimator: Optional[KLEstimator] = None,
     ):
         """Register metadata shared by all parameter groups.
 
@@ -37,6 +43,12 @@ class ParameterGroup(nn.Module, ABC):
             prior: Prior distribution; defaults to ``IIDGaussianPrior``.
             kl_num_mc_samples: Number of Monte Carlo samples to approximate the KL
                 term when an analytic expression is unavailable.
+            kl_estimator: Optional explicit :class:`KLEstimator` strategy. If
+                ``None`` (the default), ``distribution_loss()`` keeps today's
+                behavior: try analytic ``kl_divergence(q, p)``, falling back to
+                a reparameterized Monte Carlo estimate. If explicitly set,
+                ``distribution_loss()`` calls it directly with no fallback --
+                an explicit choice carries explicit responsibility.
         """
         super().__init__()
         self.name = name
@@ -45,6 +57,7 @@ class ParameterGroup(nn.Module, ABC):
 
         # Default MC settings if analytic KL is unavailable
         self.kl_num_mc_samples = kl_num_mc_samples
+        self.kl_estimator = kl_estimator
 
     @abstractmethod
     def sample_parameters(self, num_samples: int = 1) -> torch.Tensor:
@@ -59,25 +72,28 @@ class ParameterGroup(nn.Module, ABC):
     def distribution_loss(self) -> torch.Tensor:
         """$KL(q \\;||\\; p)$ summed over all parameters in this group.
 
-        Tries analytic ``kl_divergence(q, p)``. If not implemented, uses reparameterized
-        Monte Carlo: $\\mathbb{E}_q[ \\log q(\\theta) - \\log p(\\theta) ]$ with ``rsample()``.
+        If ``self.kl_estimator`` is explicitly set, delegates to it directly
+        (no fallback). Otherwise tries analytic ``kl_divergence(q, p)`` via
+        :class:`~pypolymix.parameter_groups.kl_estimators.AnalyticKL`. If not
+        implemented, falls back to a reparameterized Monte Carlo estimate of
+        $\\mathbb{E}_q[ \\log q(\\theta) - \\log p(\\theta) ]$ via
+        :class:`~pypolymix.parameter_groups.kl_estimators.ReparamMonteCarloKL`
+        (``rsample()``).
         """
-        q = self.variational_distribution()
-        p = self.prior.distribution(
-            event_shape=torch.Size([self.num_params]),
-            device=next(self.parameters()).device,
-            dtype=next(self.parameters()).dtype,
-        )
+        if self.kl_estimator is not None:
+            samples = self.sample_parameters(self.kl_num_mc_samples)
+            return self.kl_estimator.estimate(self, samples)
 
-        # Analytic KL if available:
+        # Default path (unchanged behavior): `reference` supplies device/dtype
+        # only, matching the `next(self.parameters())` used previously -- no
+        # samples are drawn unless the analytic branch raises NotImplementedError.
+        reference = next(self.parameters())
         try:
-            return td.kl_divergence(q, p).sum()
+            return AnalyticKL().estimate(self, reference)
         except NotImplementedError:
             pass
 
         # MC fallback (reparameterized)
+        q = self.variational_distribution()
         z = q.rsample((self.kl_num_mc_samples,))  # (S, num_params)
-        # Independent distributions return scalar log_prob per sample
-        log_q = q.log_prob(z)  # (S,)
-        log_p = p.log_prob(z)  # (S,)
-        return (log_q - log_p).mean()
+        return ReparamMonteCarloKL().estimate(self, z)

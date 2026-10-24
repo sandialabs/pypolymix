@@ -11,6 +11,7 @@ import torch.nn as nn
 from ..priors.base import Prior
 from ..surrogate_models.base import SurrogateModel
 from .base import ParameterGroup
+from .kl_estimators import CrossEntropyOnly, KLEstimator
 
 
 class LangevinGroup(ParameterGroup):
@@ -46,8 +47,22 @@ class LangevinGroup(ParameterGroup):
         num_diffusion_steps: int = 50,
         step_size: float = 1e-3,
         init_std: float = 1.0,
+        kl_estimator: Optional[KLEstimator] = None,
     ):
-        super().__init__(name, num_params, prior=prior)
+        """See :meth:`distribution_loss` for the ``kl_estimator`` caveat.
+
+        Args:
+            kl_estimator: Strategy passed to ``distribution_loss()``. Defaults
+                to :class:`~pypolymix.parameter_groups.kl_estimators.CrossEntropyOnly`,
+                preserving this class's historical behavior exactly -- see the
+                ``CrossEntropyOnly`` caveat in :meth:`distribution_loss`.
+        """
+        super().__init__(
+            name,
+            num_params,
+            prior=prior,
+            kl_estimator=kl_estimator if kl_estimator is not None else CrossEntropyOnly(),
+        )
 
         if num_particles <= 0:
             raise ValueError("num_particles must be > 0")
@@ -78,7 +93,9 @@ class LangevinGroup(ParameterGroup):
 
     def _validate_surrogate(self, surrogate_model: SurrogateModel) -> None:
         """Validate the score or energy surrogate dimensions."""
-        if not hasattr(surrogate_model, "num_inputs") or not hasattr(surrogate_model, "num_outputs"):
+        if not hasattr(surrogate_model, "num_inputs") or not hasattr(
+            surrogate_model, "num_outputs"
+        ):
             raise ValueError(
                 "Langevin surrogate must define 'num_inputs' and 'num_outputs' attributes to validate dimensions."
             )
@@ -128,7 +145,9 @@ class LangevinGroup(ParameterGroup):
 
         device = self.surrogate_params.device
         dtype = self.surrogate_params.dtype
-        theta = torch.randn(num_samples, self.num_params, device=device, dtype=dtype) * self.init_std
+        theta = (
+            torch.randn(num_samples, self.num_params, device=device, dtype=dtype) * self.init_std
+        )
         noise_scale = torch.sqrt(torch.tensor(2.0 * self.step_size, device=device, dtype=dtype))
 
         for _ in range(self.num_diffusion_steps):
@@ -146,14 +165,22 @@ class LangevinGroup(ParameterGroup):
         )
 
     def distribution_loss(self) -> torch.Tensor:
-        """Monte Carlo estimate of ``-E_q[log p(theta)]`` under recent particles."""
+        """Estimate ``self.kl_estimator``'s loss under recent (or freshly drawn) particles.
+
+        **Default (``CrossEntropyOnly``) caveat:** by default this computes
+        ``-E_q[log p(theta)]`` from samples alone. **This is NOT a valid KL
+        term -- it omits ``-H[q]``, the entropy of the variational
+        distribution.** Minimizing it alone drives ``q`` toward a point mass
+        at the prior's mode (MAP-seeking, "particle collapse"). It is kept
+        only as an explicit, clearly-labeled baseline/historical default --
+        pass ``kl_estimator=DiagonalGaussianEntropyKL()`` or
+        ``kl_estimator=KNNEntropyKL()`` (see
+        ``pypolymix.parameter_groups.kl_estimators``) for literature-grounded,
+        entropy-aware alternatives. See PM-05's comparison notebook (once it
+        exists) for an empirical comparison of these estimators on toy
+        posteriors.
+        """
         samples = self._last_samples
         if samples is None:
             samples = self.sample_parameters(self.num_particles)
-
-        p = self.prior.distribution(
-            event_shape=torch.Size([self.num_params]),
-            device=samples.device,
-            dtype=samples.dtype,
-        )
-        return -p.log_prob(samples).mean()
+        return self.kl_estimator.estimate(self, samples)
