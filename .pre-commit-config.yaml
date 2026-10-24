@@ -27,3 +27,12 @@ repos:
     rev: 7.0.0 # Use a specific version
     hooks:
       - id: isort
+        # Without --profile=black, isort's default import-wrapping style and
+        # black's --line-length=100 (above) disagree on multi-line imports:
+        # isort wraps one way, black reformats it another way, isort "fixes"
+        # it back, forever -- an infinite oscillation (same file content,
+        # pre-commit reports it "modified" on every single run; discovered
+        # when tests/regression_tests/test_moe.py's new multi-line import
+        # never converged after repeated runs). --profile=black is isort's
+        # own documented recommendation for this exact conflict.
+        args: ["--profile=black", "--line-length=100"]
