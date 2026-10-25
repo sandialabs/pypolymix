@@ -16,6 +16,8 @@ nav:
     - Langevin Score Polynomial Chaos: examples/langevin_score_pce.ipynb
     - Langevin Energy Polynomial Chaos: examples/langevin_energy_pce.ipynb
     - KL/Entropy Estimator Comparison: examples/kl_estimators_comparison.ipynb
+    - Toy Sine Regression -- Family Comparison: examples/toy_sine_regression_families.ipynb
+    - Toy Multimodal Mixture -- Label Switching: examples/toy_moe_multimodal.ipynb
     - Constitutive Model Surrogate: examples/constitutive_model/README.md
   - Acknowledgments: 
     - Acknowledgments: ack.md
