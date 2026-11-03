@@ -87,3 +87,54 @@ def test_validate_surrogate_requires_num_inputs_and_num_outputs():
     bad_surrogate = 67 # not a surrogate model
     with pytest.raises(ValueError):
         LangevinGroup(name="test", num_params=2, score_model=bad_surrogate)
+
+
+def test_sample_trajectory_returns_Tensor(langevin_group):
+    trajectory = langevin_group.sample_trajectory(num_samples=4)
+    assert isinstance(trajectory, torch.Tensor)
+
+
+def test_sample_trajectory_shape_record_every_one(langevin_group):
+    trajectory = langevin_group.sample_trajectory(num_samples=4)
+    # +1 for the recorded initial configuration (step 0).
+    assert trajectory.shape == torch.Size([langevin_group.num_diffusion_steps + 1, 4, NUM_PARAMS])
+
+
+def test_sample_trajectory_shape_record_every_stride(langevin_group):
+    record_every = 7
+    trajectory = langevin_group.sample_trajectory(num_samples=4, record_every=record_every)
+    num_diffusion_steps = langevin_group.num_diffusion_steps
+    expected = 1 + num_diffusion_steps // record_every
+    if num_diffusion_steps % record_every != 0:
+        expected += 1  # the final step is always included even off-stride
+    assert trajectory.shape[0] == expected
+
+
+def test_sample_trajectory_first_and_last_steps(langevin_group):
+    torch.manual_seed(0)
+    trajectory = langevin_group.sample_trajectory(num_samples=4, record_every=3)
+    torch.manual_seed(0)
+    final = langevin_group.sample_parameters(num_samples=4)
+    # Same seed, same dynamics: the trajectory's final recorded step should
+    # match an independent sample_parameters() call exactly.
+    assert torch.allclose(trajectory[-1], final)
+
+
+def test_sample_trajectory_updates_last_samples(langevin_group):
+    trajectory = langevin_group.sample_trajectory(num_samples=4)
+    assert torch.equal(langevin_group._last_samples, trajectory[-1])
+
+
+def test_sample_trajectory_negative_num_samples_ValueError(langevin_group):
+    with pytest.raises(ValueError):
+        langevin_group.sample_trajectory(num_samples=-1)
+
+
+def test_sample_trajectory_zero_record_every_ValueError(langevin_group):
+    with pytest.raises(ValueError):
+        langevin_group.sample_trajectory(num_samples=4, record_every=0)
+
+
+def test_sample_trajectory_no_grad_tracking(langevin_group):
+    trajectory = langevin_group.sample_trajectory(num_samples=4)
+    assert not trajectory.requires_grad

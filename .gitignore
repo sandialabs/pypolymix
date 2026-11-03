@@ -178,3 +178,6 @@ pyrightconfig.json
 .vscode
 
 site
+
+# Experiments folder
+experiments

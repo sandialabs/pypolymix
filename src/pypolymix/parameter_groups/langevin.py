@@ -136,6 +136,18 @@ class LangevinGroup(ParameterGroup):
             )[0]
         return score
 
+    def _step(self, theta: torch.Tensor, noise_scale: torch.Tensor) -> torch.Tensor:
+        """One unadjusted-Langevin update, shared by :meth:`sample_parameters`
+        and :meth:`sample_trajectory`."""
+        drift = self.step_size * self._score(theta)
+        diffusion = noise_scale * torch.randn_like(theta)
+        return theta + drift + diffusion
+
+    def _init_particles(self, num_samples: int) -> torch.Tensor:
+        device = self.surrogate_params.device
+        dtype = self.surrogate_params.dtype
+        return torch.randn(num_samples, self.num_params, device=device, dtype=dtype) * self.init_std
+
     def sample_parameters(self, num_samples: int | None = None) -> torch.Tensor:
         """Draw parameter samples by running Langevin dynamics."""
         if num_samples is None:
@@ -143,20 +155,51 @@ class LangevinGroup(ParameterGroup):
         if num_samples <= 0:
             raise ValueError("num_samples must be > 0")
 
-        device = self.surrogate_params.device
-        dtype = self.surrogate_params.dtype
-        theta = (
-            torch.randn(num_samples, self.num_params, device=device, dtype=dtype) * self.init_std
+        theta = self._init_particles(num_samples)
+        noise_scale = torch.sqrt(
+            torch.tensor(2.0 * self.step_size, device=theta.device, dtype=theta.dtype)
         )
-        noise_scale = torch.sqrt(torch.tensor(2.0 * self.step_size, device=device, dtype=dtype))
 
         for _ in range(self.num_diffusion_steps):
-            drift = self.step_size * self._score(theta)
-            diffusion = noise_scale * torch.randn_like(theta)
-            theta = theta + drift + diffusion
+            theta = self._step(theta, noise_scale)
 
         self._last_samples = theta
         return theta
+
+    def sample_trajectory(self, num_samples: int | None = None, record_every: int = 1) -> torch.Tensor:
+        """Run the same dynamics as :meth:`sample_parameters`, but record and
+        return every ``record_every``-th particle configuration along the way.
+
+        Intended for pedagogical/diagnostic use (e.g. plotting particle
+        trajectories against diffusion step as a pseudotime axis), not for
+        training -- gradients are not tracked through the recorded steps.
+
+        Returns:
+            Tensor of shape ``(num_recorded, num_samples, num_params)``,
+            always including step 0 (the initial draw) and the final step
+            (``num_diffusion_steps``), regardless of ``record_every``.
+        """
+        if num_samples is None:
+            num_samples = self.num_particles
+        if num_samples <= 0:
+            raise ValueError("num_samples must be > 0")
+        if record_every <= 0:
+            raise ValueError("record_every must be > 0")
+
+        theta = self._init_particles(num_samples)
+        noise_scale = torch.sqrt(
+            torch.tensor(2.0 * self.step_size, device=theta.device, dtype=theta.dtype)
+        )
+
+        with torch.no_grad():
+            trajectory = [theta.clone()]
+            for step in range(1, self.num_diffusion_steps + 1):
+                theta = self._step(theta, noise_scale)
+                if step % record_every == 0 or step == self.num_diffusion_steps:
+                    trajectory.append(theta.clone())
+
+        self._last_samples = theta
+        return torch.stack(trajectory, dim=0)
 
     def variational_distribution(self) -> td.Distribution:
         """Langevin sampling defines an implicit posterior, not an analytic distribution."""
