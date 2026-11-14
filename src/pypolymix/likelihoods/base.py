@@ -36,7 +36,7 @@ class Likelihood(nn.Module, ABC):
 
     @abstractmethod
     def no_decay_parameters(self) -> list:
-        """Parameters (e.g. ``log_sigma``, ``raw_df``) that must be excluded
+        """Parameters (e.g. ``log_sigma``) that must be excluded
         from weight decay in the optimizer -- see each subclass docstring for
         why."""
         raise NotImplementedError()

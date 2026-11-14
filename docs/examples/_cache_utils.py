@@ -8,21 +8,14 @@ infrastructure, not part of the ``pypolymix`` package itself.
 
 **Only cache plain data** (tensors, and dicts/lists of tensors, numpy arrays,
 and python scalars) -- never live ``nn.Module``/``ParameterGroup`` objects
-directly. Several of this library's parameter groups (e.g. ``SGLDGroup``)
-hold a ``log_likelihood_fn`` that is a notebook-local Python closure, which
-standard pickling (what ``torch.save`` uses under the hood) cannot
-serialize. The robust pattern used throughout both notebooks is:
-
-- For *trained* families (the Gaussian families, and ``LangevinGroup``):
-  cache ``group.state_dict()`` (plain tensors only) plus the training
-  ``history``; reconstruct a fresh ``group``/``model`` via the same factory
-  function used originally, then ``group.load_state_dict(...)`` to restore
-  the fit instantly, skipping the training loop.
-- For ``SGLDGroup`` (nothing is trained -- ``sample_parameters()`` *is* the
-  computation): cache the drawn particle tensor(s) directly, and reuse that
-  cached tensor everywhere downstream instead of calling
-  ``sample_parameters()`` again (each call reruns the full diffusion chain
-  from scratch -- see ``SGLDGroup``'s own docstring).
+directly; they may hold notebook-local Python closures, which standard
+pickling (what ``torch.save`` uses under the hood) cannot serialize. The
+robust pattern for *trained* families (the Gaussian families, and
+``LangevinGroup``) is to cache ``group.state_dict()`` (plain tensors only)
+plus the training ``history``; reconstruct a fresh ``group``/``model`` via
+the same factory function used originally, then
+``group.load_state_dict(...)`` to restore the fit instantly, skipping the
+training loop.
 
 Usage:
     ```python

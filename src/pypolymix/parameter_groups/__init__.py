@@ -4,7 +4,6 @@ from .base import ParameterGroup
 from .deterministic import DeterministicGroup
 from .gaussian import GaussianGroup, IIDGaussianGroup, LowRankGaussianGroup
 from .langevin import LangevinGroup
-from .sgld import SGLDGroup
 from .whitened import WhitenedGroup
 
 from .kl_estimators import (  # isort:skip
@@ -29,6 +28,5 @@ __all__ = [
     "LowRankGaussianGroup",
     "ParameterGroup",
     "ReparamMonteCarloKL",
-    "SGLDGroup",
     "WhitenedGroup",
 ]

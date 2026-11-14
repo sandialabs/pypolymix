@@ -150,12 +150,12 @@ loss = elbo_loss(nll_mean, kl, n_train=n_train)
 
 ## Learnable likelihood scale: normalizer + no-decay
 
-A learnable observation-noise scale (e.g. `GaussianLikelihood`'s \(\sigma\) or `StudentTLikelihood`'s scale and degrees of freedom) is only identifiable from the data if two requirements hold:
+A learnable observation-noise scale (e.g. `GaussianLikelihood`'s \(\sigma\)) is only identifiable from the data if two requirements hold:
 
 1. **The normalizer term is present.** For the Gaussian case, dropping \(\log(2\pi\sigma_d^2)\) and keeping only the quadratic data term leaves \(\partial(\text{loss})/\partial(\log\sigma) < 0\) everywhere, so \(\sigma\) is driven to a degenerate extreme by gradient descent regardless of fit quality -- the normalizer is what penalizes making \(\sigma\) arbitrarily large (or small) to shrink the data term for free.
-2. **The scale/df parameter is excluded from weight decay.** Decoupled weight decay pulls a parameter toward 0 independent of the data; applied to `log_sigma` (Gaussian) or `log_scale`/`raw_df` (Student-t) this silently asserts a specific noise scale instead of letting the likelihood identify it from the residuals.
+2. **The scale parameter is excluded from weight decay.** Decoupled weight decay pulls a parameter toward 0 independent of the data; applied to `log_sigma` this silently asserts a specific noise scale instead of letting the likelihood identify it from the residuals.
 
-`GaussianLikelihood` and `StudentTLikelihood` both already include the normalizer term in `nll()` and expose `no_decay_parameters()` so the optimizer can be built with two parameter groups:
+`GaussianLikelihood` already includes the normalizer term in `nll()` and exposes `no_decay_parameters()` so the optimizer can be built with two parameter groups:
 
 ```python
 import torch

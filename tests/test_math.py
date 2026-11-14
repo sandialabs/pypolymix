@@ -3,7 +3,6 @@ import torch
 import torch.nn.functional as F
 
 from pypolymix._math import inverse_softplus
-from pypolymix.likelihoods import StudentTLikelihood
 from pypolymix.parameter_groups import GaussianGroup, LowRankGaussianGroup
 
 
@@ -34,8 +33,3 @@ def test_low_rank_gaussian_group_large_init_variance_is_finite():
     cov_diag = group._cov_diag
     assert torch.isfinite(cov_diag).all()
     torch.testing.assert_close(cov_diag, torch.full((3,), 1000.0))
-
-
-def test_student_t_large_init_df_is_finite():
-    likelihood = StudentTLikelihood(num_outputs=1, init_df=1000.0)
-    torch.testing.assert_close(likelihood.df, torch.tensor([1000.0]))

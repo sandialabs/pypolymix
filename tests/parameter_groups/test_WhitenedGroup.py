@@ -44,7 +44,8 @@ def test_num_params_matches_base_group(whitened_group):
 
 def test_forces_base_group_prior_to_standard_normal(center, scale):
     base = IIDGaussianGroup(name="z", num_params=NUM_PARAMS, prior=UniformPrior(-5.0, 5.0))
-    group = WhitenedGroup(base, center, scale)
+    with pytest.warns(UserWarning):
+        group = WhitenedGroup(base, center, scale)
     assert isinstance(group.base_group.prior, IIDGaussianPrior)
 
 
