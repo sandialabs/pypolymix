@@ -5,6 +5,7 @@ import torch.distributions as td
 import torch.nn as nn
 import torch.nn.functional as F
 
+from .._math import inverse_softplus
 from ..priors.base import Prior
 from .base import ParameterGroup
 from .kl_estimators import KLEstimator
@@ -97,7 +98,7 @@ class GaussianGroup(ParameterGroup):
         with torch.no_grad():
             # set diagonal entries in raw_tril so softplus(raw) ≈ init_scale_diag - min_scale
             s = max(init_scale_diag - self.min_scale, 1e-12)
-            diag_raw = torch.log(torch.expm1(torch.tensor(s)))
+            diag_raw = inverse_softplus(s)
             # positions where i == j are diagonals in the packed vector order
             mask_diag = self._tri_i == self._tri_j
             self.raw_tril[mask_diag] = diag_raw
@@ -167,7 +168,7 @@ class LowRankGaussianGroup(ParameterGroup):
 
         with torch.no_grad():
             s = max(init_scale_diag - self.min_variance, 1e-12)
-            diag_raw = torch.log(torch.expm1(torch.tensor(s)))
+            diag_raw = inverse_softplus(s)
             self.raw_cov_diag.fill_(diag_raw)
 
     @property

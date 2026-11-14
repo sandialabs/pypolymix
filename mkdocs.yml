@@ -17,6 +17,7 @@ nav:
     - Langevin Energy Polynomial Chaos: examples/langevin_energy_pce.ipynb
     - Exponential Decay: examples/exponential_decay_posterior.ipynb
     - The Rosenbrock Banana: examples/rosenbrock_banana_posterior.ipynb
+    - A larger Mixture of Experts: examples/moe_posterior.ipynb
     - Constitutive Model Surrogate: examples/constitutive_model/README.md
   - Acknowledgments: 
     - Acknowledgments: ack.md

@@ -5,6 +5,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.distributions import StudentT
 
+from .._math import inverse_softplus
 from .base import Likelihood
 
 
@@ -64,7 +65,7 @@ class StudentTLikelihood(Likelihood):
         self.df_floor = float(df_floor)
         self.log_scale = nn.Parameter(torch.full((self.num_outputs,), math.log(init_scale)))
         # softplus^{-1}(init_df - df_floor): start df at init_df, let it descend.
-        raw0 = math.log(math.expm1(init_df - df_floor))
+        raw0 = inverse_softplus(torch.tensor(init_df - df_floor, dtype=torch.float64)).item()
         self.raw_df = nn.Parameter(torch.full((self.num_outputs,), raw0))
 
     @property
